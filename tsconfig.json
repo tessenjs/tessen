@@ -109,7 +109,10 @@
       ],
       "$types/*": [
         "./src/lib/types/*"
-      ]
+      ],
+      "$utils/*": [
+        "./src/lib/utils/*"
+      ],
     },
     "plugins": [
       {

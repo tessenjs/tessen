@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npx build.ts && tspc",
-    "dev": "npx build.ts && npx tsx src/index.ts",
+    "build": "tsx build.ts && tspc",
+    "dev": "tsx build.ts && tsx src/index.ts",
     "start": "node dist/index.js"
   },
   "keywords": [],

@@ -6,7 +6,7 @@ import { Usable } from "$types/Usable";
 import { SlashCommandName, SlashCommandConfig } from "$types/SlashCommand";
 import { Interaction } from "$types/Interactions";
 import EventEmitter from "events";
-import { generateCombinations } from "@/utils/pattern";
+import { generateCombinations } from "$utils/pattern";
 
 export interface PackConfig {
   id: string;
