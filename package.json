@@ -2,12 +2,22 @@
   "name": "tessen",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Kıraç Armağan Önal & Erdem Göksel",
   "license": "LGPL-3.0-or-later",
-  "packageManager": "pnpm@10.7.1"
+  "packageManager": "pnpm@10.7.1",
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "tsx": "^4.19.3",
+    "ttsc": "^0.3.1",
+    "typescript": "^5.8.3",
+    "typescript-transform-paths": "^3.5.5"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.1"
+  }
 }
