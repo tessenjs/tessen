@@ -60,7 +60,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
   slashCommand<T extends string>(slashCommandConfig: {
     id: string;
-    name: SlashCommandName<T> extends never ? never : T;
+    name: T extends SlashCommandName<T> ? T : never;
   }) {}
   
 }
