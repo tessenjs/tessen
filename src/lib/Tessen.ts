@@ -1,5 +1,6 @@
 import { Pack } from "$lib/Pack";
 import { Client, ClientOptions, Collection } from "discord.js";
+import { defaultify } from "stuffs"
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
@@ -17,6 +18,7 @@ export type CacheData<T> = {
 export class Tessen extends Pack<TessenConfig> {
 
   cache = {
+    contentLocale: {} as any,
     locales: new Collection<string, CacheData<any>>(),
     subPacks: new Collection<string, CacheData<Pack>>(),
     interactions: new Collection<string, CacheData<any>>(),
@@ -43,8 +45,13 @@ export class Tessen extends Pack<TessenConfig> {
     this.cache.interactions.clear();
     this.cache.events.clear();
     this.cache.inspectors.clear();
+    this.cache.contentLocale = {};
 
     this.pushCache(this);
+
+    for (const [key, value] of this.cache.locales) {
+      this.cache.contentLocale = defaultify(value.data.contentLocale, this.cache.contentLocale, true);
+    }
   }
 
   private pushCache(pack: Pack, path: string[] = []) {

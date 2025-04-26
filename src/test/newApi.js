@@ -3,9 +3,9 @@ import { Tessen, Pack, Inspector, Locales } from 'tessen';
 // tessen pack'in extendidir
 const tessen = new Tessen();
 
-const pack = new Pack({ name: 'ExamplePack' });
-const inspector = new Inspector({ name: 'ExampleInspector', domain: "CurrentPack|AllSubPacks" });
-const locales = new Locales({ name: 'ExampleLocales', domain: "CurrentPack|AllSubPacks" });
+const pack = new Pack({ id: 'ExamplePack' });
+const inspector = new Inspector({ id: 'ExampleInspector', domain: "CurrentPack|AllSubPacks" });
+const locales = new Locales({ id: 'ExampleLocales', domain: "CurrentPack|AllSubPacks" });
 
 pack.onUnload(
   locales.loadFile({
@@ -41,11 +41,11 @@ inspector.event({
 });  // () => { } // unloader
 
 // 'system (set|unset) settings' minimatch glob
-inspector.onChatInput('system (set|unset) settings', () => {
+inspector.chatInput('system (set|unset) settings', () => {
 
 })  // () => { } // unloader
 
-inspector.onButton({
+inspector.button({
   id: "",
   handle() {
 
@@ -56,3 +56,17 @@ pack.use(inspector);  // () => { } // unloader
 pack.use(locales);  // () => { } // unloader
 
 tessen.use(pack);  // () => { } // unloader
+
+tessen.slashCommand({
+  id: 'example',
+  name: 'example (command)?',
+  description: 'an example command',
+  onExecute: (ctx) => {
+    ctx.interaction.reply({
+      content: 'Hello world',
+      ephemeral: true
+    })
+  }
+}); // () => { } // unloader
+
+tessen.start();

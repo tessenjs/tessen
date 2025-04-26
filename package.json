@@ -22,6 +22,7 @@
     "typescript-transform-paths": "^3.5.3"
   },
   "dependencies": {
-    "discord.js": "^14.19.1"
+    "discord.js": "^14.19.1",
+    "stuffs": "^0.1.43"
   }
 }
