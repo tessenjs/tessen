@@ -42,10 +42,6 @@ export type SlashCommandName<S extends string> =
               : `${W1} ${W2}`
           : never
         : never
-      : S extends `${infer W1}`
-        ? W1 extends string
-          ? Max32<W1> extends never
-            ? never
-            : `${W1}`
-          : never
-        : never
+      : Max32<S> extends never
+        ? never
+        : S
