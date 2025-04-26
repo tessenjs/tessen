@@ -7,9 +7,9 @@ type StringToTuple<
 
 type StringLength<S extends string> = StringToTuple<S>["length"];
 
-type Max16<S extends string> = StringLength<S> extends infer L
+type Max32<S extends string> = StringLength<S> extends infer L
   ? L extends number
-    ? L extends 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16
+    ? L extends 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32
       ? S
       : never
     : never
@@ -17,35 +17,35 @@ type Max16<S extends string> = StringLength<S> extends infer L
 
 export type SlashCommandName<S extends string> =
   S extends `${infer W1} ${infer W2} ${infer W3} ${infer W4}`
-   ? never // Max 3 words allowed
+   ? never
   : S extends `${infer W1} ${infer W2} ${infer W3}`
    ? W1 extends string
      ? W2 extends string
        ? W3 extends string
-         ? Max16<W1> extends never // Check if W1 is too long
+         ? Max32<W1> extends never
            ? never
-           : Max16<W2> extends never // Check if W2 is too long
+           : Max32<W2> extends never
              ? never
-             : Max16<W3> extends never // Check if W3 is too long
+             : Max32<W3> extends never
                ? never
-               : `${W1} ${W2} ${W3}` // All words are valid length
+               : `${W1} ${W2} ${W3}`
           : never
         : never
       : never
     : S extends `${infer W1} ${infer W2}`
       ? W1 extends string
         ? W2 extends string
-          ? Max16<W1> extends never // Check if W1 is too long
+          ? Max32<W1> extends never
             ? never
-            : Max16<W2> extends never // Check if W2 is too long
+            : Max32<W2> extends never
               ? never
-              : `${W1} ${W2}` // Both words are valid length
+              : `${W1} ${W2}`
           : never
         : never
       : S extends `${infer W1}`
         ? W1 extends string
-          ? Max16<W1> extends never // Check if W1 is too long
+          ? Max32<W1> extends never
             ? never
-            : `${W1}` // Word is valid length
+            : `${W1}`
           : never
         : never
