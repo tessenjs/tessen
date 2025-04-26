@@ -6,6 +6,11 @@ const nativeTsTypes = [
     "Set"
 ]
 
+if (!fs.existsSync("./node_modules/discord.js/typings/index.d.ts")) {
+    console.log("[ERROR] discord.js typings found, please install discord.js typings, execute `pnpm i`");
+    process.exit(1);
+}
+
 let content = fs.readFileSync("./node_modules/discord.js/typings/index.d.ts", "utf-8")
     .replace(/\/\/[^\n]+/, "")
     .replace(/\/\*[\s\S]*?\*\//g, "")
