@@ -1,4 +1,4 @@
-import { Pack, PackData } from "$lib/Pack";
+import { Pack } from "$lib/Pack";
 import { Client, ClientOptions, Collection } from "discord.js";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
@@ -71,7 +71,7 @@ export class Tessen extends Pack<TessenConfig> {
       };
 
       // @ts-ignore
-      client._emit = originalEmit.bind(client);
+      tessenClient.client._emit = originalEmit.bind(client);
 
       await tessenClient.client.login(tessenClient.token);
 

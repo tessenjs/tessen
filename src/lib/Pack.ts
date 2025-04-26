@@ -3,27 +3,21 @@ import { Collection } from "discord.js";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
-import { SlashCommandName } from "$types/SlashCommandName";
+import { SlashCommandName, SlashCommandConfig } from "$types/SlashCommand";
+import { Interaction } from "$types/Interactions";
 import EventEmitter from "events";
+import { generateCombinations } from "@/utils/pattern";
 
 export interface PackConfig {
   id: string;
 }
 
-export interface PackData {
-  locales: Collection<string, any>;
-  subPacks: Collection<string, Pack>;
-  interactions: Collection<string, any>;
-  events: Collection<string, any>;
-  inspectors: Collection<string, any>;
-}
-
 export class Pack<Config extends PackConfig = PackConfig> implements Identifiable {
 
-  data: PackData = {
+  data = {
     locales: new Collection<string, any>(),
     subPacks: new Collection<string, Pack>(),
-    interactions: new Collection<string, any>(),
+    interactions: new Collection<string, Interaction>(),
     events: new Collection<string, any>(),
     inspectors: new Collection<string, any>(),
   }
@@ -58,9 +52,14 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     }
   }
 
-  slashCommand<T extends string>(slashCommandConfig: {
-    id: string;
-    name: T extends SlashCommandName<T> ? T : never;
-  }) {}
-  
+  slashCommand<T extends string>(cfg: SlashCommandConfig<T extends SlashCommandName<T> ? T : never>): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with name ${cfg.id} already exists.`);
+
+    const nameCombinations = generateCombinations(cfg.name);
+    this.data.interactions.set(cfg.name, { ...cfg, nameCombinations });
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
 }
