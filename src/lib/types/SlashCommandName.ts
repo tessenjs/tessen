@@ -16,7 +16,7 @@ type Max32<S extends string> = StringLength<S> extends infer L
   : never;
 
 export type SlashCommandName<S extends string> =
-  S extends `${infer W1} ${infer W2} ${infer W3} ${infer W4}`
+  S extends `${infer _} ${infer _} ${infer _} ${infer _}`
    ? never
   : S extends `${infer W1} ${infer W2} ${infer W3}`
    ? W1 extends string
