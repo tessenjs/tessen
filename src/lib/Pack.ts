@@ -5,8 +5,8 @@ import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
 import { SlashCommandName, SlashCommandConfig } from "$types/SlashCommand";
 import { Interaction } from "$types/Interactions";
-import EventEmitter from "events";
 import { generateCombinations } from "$utils/pattern";
+import EventEmitter from "events";
 
 export interface PackConfig {
   id: string;
