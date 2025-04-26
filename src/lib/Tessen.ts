@@ -1,8 +1,12 @@
 import { Pack, PackData } from "$lib/Pack";
-import { Collection } from "discord.js";
+import { Client, ClientOptions, Collection } from "discord.js";
+
+export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
+export type TessenClient = { id: string, client: Client, token: string };
 
 export interface TessenConfig {
   id: string;
+  clients: TessenConfigClient[]
 }
 
 export type CacheData<T> = {
@@ -20,8 +24,17 @@ export class Tessen extends Pack<TessenConfig> {
     inspectors: new Collection<string, CacheData<any>>(),
   }
 
+  clients = new Collection<string, TessenClient>();
+
   constructor(config: TessenConfig) {
     super(config);
+  }
+
+  refreshClients() {
+    this.clients.clear();
+    this.config.clients.forEach(({ id, options, token }) => {
+      this.clients.set(id, { id, client: new Client(options), token });
+    });
   }
 
   refresh() {
@@ -44,5 +57,27 @@ export class Tessen extends Pack<TessenConfig> {
       this.cache.subPacks.set(key, { path, data: subPack });
       this.pushCache(subPack, [...path, pack.id]);
     });
+  }
+
+  async start() {
+    this.refresh();
+    for (const tessenClient of this.clients.values()) {
+      const originalEmit = tessenClient.client.emit.bind(tessenClient.client);
+
+      tessenClient.client.emit = (event: string, ...args: any[]) => {
+        this.events.emit("tessen:clientEvent", { client: tessenClient, event, args });
+        this.events.emit(`${tessenClient.id}:${event}`, { client: tessenClient, event, args });
+        return originalEmit(event, ...args);
+      };
+
+      // @ts-ignore
+      client._emit = originalEmit.bind(client);
+
+      await tessenClient.client.login(tessenClient.token);
+
+      this.events.emit("tessen:clientReady", { client: tessenClient });
+    }
+
+    this.events.emit("tessen:clientsReady", { clients: this.clients });
   }
 }

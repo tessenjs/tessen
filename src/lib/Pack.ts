@@ -3,6 +3,7 @@ import { Collection } from "discord.js";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
+import EventEmitter from "events";
 
 export interface PackConfig {
   id: string;
@@ -26,11 +27,16 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     inspectors: new Collection<string, any>(),
   }
 
+  events = new EventEmitter();
+
   get id() {
     return this.config.id;
   }
 
-  constructor(public config: Config) { }
+  constructor(public config: Config) {
+    if (config.id === "tessen")
+      throw new Error("Pack id cannot be 'tessen'.");
+  }
 
   use(...args: Usable[]): DisposeCallback {
     const disposeCallbacks: DisposeCallback[] = [];
