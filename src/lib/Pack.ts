@@ -3,6 +3,7 @@ import { Collection } from "discord.js";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
+import { SlashCommandName } from "$types/SlashCommandName";
 import EventEmitter from "events";
 
 export interface PackConfig {
@@ -57,4 +58,8 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     }
   }
 
+  slashCommand<T extends string>(slashCommandConfig: {
+    id: string;
+    name: SlashCommandName<T> extends never ? never : T;
+  }) {}
 }
