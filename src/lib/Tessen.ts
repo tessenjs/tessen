@@ -18,12 +18,16 @@ export type CacheData<T> = {
 export class Tessen extends Pack<TessenConfig> {
 
   cache = {
-    contentLocale: {} as any,
     locales: new Collection<string, CacheData<any>>(),
     subPacks: new Collection<string, CacheData<Pack>>(),
     interactions: new Collection<string, CacheData<any>>(),
     events: new Collection<string, CacheData<any>>(),
     inspectors: new Collection<string, CacheData<any>>(),
+  }
+
+  locales = {
+    content: new Collection<string, any>(),
+    interaction: new Collection<string, any>(),
   }
 
   clients = new Collection<string, TessenClient>();
@@ -45,12 +49,20 @@ export class Tessen extends Pack<TessenConfig> {
     this.cache.interactions.clear();
     this.cache.events.clear();
     this.cache.inspectors.clear();
-    this.cache.contentLocale = {};
+
+    this.locales.content.clear();
+    this.locales.interaction.clear();
 
     this.pushCache(this);
 
     for (const [key, value] of this.cache.locales) {
-      this.cache.contentLocale = defaultify(value.data.contentLocale, this.cache.contentLocale, true);
+      let currentContentLocale = (this.locales.content.get(value.data.language) ?? {});
+      currentContentLocale = defaultify(value.data.contentLocale, currentContentLocale, true);
+      this.locales.content.set(value.data.language, currentContentLocale);
+
+      let currentInteractionLocale = (this.locales.interaction.get(value.data.language) ?? {});
+      currentInteractionLocale = defaultify(value.data.interactionLocale, currentInteractionLocale, true);
+      this.locales.interaction.set(value.data.language, currentInteractionLocale);
     }
   }
 
