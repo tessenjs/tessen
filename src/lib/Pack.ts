@@ -14,6 +14,8 @@ export interface PackConfig {
 
 export class Pack<Config extends PackConfig = PackConfig> implements Identifiable {
 
+  private unloaders: DisposeCallback[] = [];
+
   data = {
     locales: new Collection<string, any>(),
     subPacks: new Collection<string, Pack>(),
@@ -60,6 +62,23 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     this.data.interactions.set(cfg.name, { ...cfg, nameCombinations });
 
     return () => this.data.interactions.delete(cfg.id);
+  }
+
+  unload(...callbacks: DisposeCallback[]): void {
+    this.unloaders.push(...callbacks);
+  }
+
+  destroy(): void {
+    this.unloaders.forEach((dispose) => dispose());
+    this.unloaders.length = 0;
+
+    this.data.interactions.clear();
+    this.data.events.clear();
+    this.data.inspectors.clear();
+    this.data.locales.clear();
+    this.data.subPacks.clear();
+
+    this.events.removeAllListeners();
   }
 
 }

@@ -120,3 +120,302 @@ export interface TessenClientEvents {
   guildScheduledEventUserRemove: { guildScheduledEvent: GuildScheduledEvent | PartialGuildScheduledEvent, user: User };
   soundboardSounds: { soundboardSounds: ReadonlyCollection<Snowflake, SoundboardSound>, guild: Guild };
 }
+
+export const TessenClientEventMap = {
+  "applicationCommandPermissionsUpdate": [
+    "data"
+  ],
+  "autoModerationActionExecution": [
+    "autoModerationActionExecution"
+  ],
+  "autoModerationRuleCreate": [
+    "autoModerationRule"
+  ],
+  "autoModerationRuleDelete": [
+    "autoModerationRule"
+  ],
+  "autoModerationRuleUpdate": [
+    "oldAutoModerationRule",
+    "newAutoModerationRule"
+  ],
+  "cacheSweep": [
+    "message"
+  ],
+  "channelCreate": [
+    "channel"
+  ],
+  "channelDelete": [
+    "channel"
+  ],
+  "channelPinsUpdate": [
+    "channel",
+    "date"
+  ],
+  "channelUpdate": [
+    "oldChannel",
+    "newChannel"
+  ],
+  "debug": [
+    "message"
+  ],
+  "warn": [
+    "message"
+  ],
+  "emojiCreate": [
+    "emoji"
+  ],
+  "emojiDelete": [
+    "emoji"
+  ],
+  "emojiUpdate": [
+    "oldEmoji",
+    "newEmoji"
+  ],
+  "entitlementCreate": [
+    "entitlement"
+  ],
+  "entitlementDelete": [
+    "entitlement"
+  ],
+  "entitlementUpdate": [
+    "oldEntitlement",
+    "newEntitlement"
+  ],
+  "error": [
+    "error"
+  ],
+  "guildAuditLogEntryCreate": [
+    "auditLogEntry",
+    "guild"
+  ],
+  "guildAvailable": [
+    "guild"
+  ],
+  "guildBanAdd": [
+    "ban"
+  ],
+  "guildBanRemove": [
+    "ban"
+  ],
+  "guildCreate": [
+    "guild"
+  ],
+  "guildDelete": [
+    "guild"
+  ],
+  "guildUnavailable": [
+    "guild"
+  ],
+  "guildIntegrationsUpdate": [
+    "guild"
+  ],
+  "guildMemberAdd": [
+    "member"
+  ],
+  "guildMemberAvailable": [
+    "member"
+  ],
+  "guildMemberRemove": [
+    "member"
+  ],
+  "guildMembersChunk": [
+    "members",
+    "guild",
+    "data"
+  ],
+  "guildMemberUpdate": [
+    "oldMember",
+    "newMember"
+  ],
+  "guildUpdate": [
+    "oldGuild",
+    "newGuild"
+  ],
+  "guildSoundboardSoundCreate": [
+    "soundboardSound"
+  ],
+  "guildSoundboardSoundDelete": [
+    "soundboardSound"
+  ],
+  "guildSoundboardSoundUpdate": [
+    "oldSoundboardSound",
+    "newSoundboardSound"
+  ],
+  "inviteCreate": [
+    "invite"
+  ],
+  "inviteDelete": [
+    "invite"
+  ],
+  "messageCreate": [
+    "message"
+  ],
+  "messageDelete": [
+    "message"
+  ],
+  "messagePollVoteAdd": [
+    "pollAnswer",
+    "userId"
+  ],
+  "messagePollVoteRemove": [
+    "pollAnswer",
+    "userId"
+  ],
+  "messageReactionRemoveAll": [
+    "message",
+    "reactions"
+  ],
+  "messageReactionRemoveEmoji": [
+    "reaction"
+  ],
+  "messageDeleteBulk": [
+    "messages",
+    "channel"
+  ],
+  "messageReactionAdd": [
+    "reaction",
+    "user",
+    "details"
+  ],
+  "messageReactionRemove": [
+    "reaction",
+    "user",
+    "details"
+  ],
+  "messageUpdate": [
+    "oldMessage",
+    "newMessage"
+  ],
+  "presenceUpdate": [
+    "oldPresence",
+    "newPresence"
+  ],
+  "ready": [
+    "client"
+  ],
+  "roleCreate": [
+    "role"
+  ],
+  "roleDelete": [
+    "role"
+  ],
+  "roleUpdate": [
+    "oldRole",
+    "newRole"
+  ],
+  "threadCreate": [
+    "thread",
+    "newlyCreated"
+  ],
+  "threadDelete": [
+    "thread"
+  ],
+  "threadListSync": [
+    "threads",
+    "guild"
+  ],
+  "threadMemberUpdate": [
+    "oldMember",
+    "newMember"
+  ],
+  "threadMembersUpdate": [
+    "addedMembers",
+    "removedMembers",
+    "thread"
+  ],
+  "threadUpdate": [
+    "oldThread",
+    "newThread"
+  ],
+  "typingStart": [
+    "typing"
+  ],
+  "userUpdate": [
+    "oldUser",
+    "newUser"
+  ],
+  "voiceChannelEffectSend": [
+    "voiceChannelEffect"
+  ],
+  "voiceStateUpdate": [
+    "oldState",
+    "newState"
+  ],
+  "webhooksUpdate": [
+    "channel"
+  ],
+  "interactionCreate": [
+    "interaction"
+  ],
+  "shardDisconnect": [
+    "closeEvent",
+    "shardId"
+  ],
+  "shardError": [
+    "error",
+    "shardId"
+  ],
+  "shardReady": [
+    "shardId",
+    "unavailableGuilds"
+  ],
+  "shardReconnecting": [
+    "shardId"
+  ],
+  "shardResume": [
+    "shardId",
+    "replayedEvents"
+  ],
+  "stageInstanceCreate": [
+    "stageInstance"
+  ],
+  "stageInstanceUpdate": [
+    "oldStageInstance",
+    "newStageInstance"
+  ],
+  "stageInstanceDelete": [
+    "stageInstance"
+  ],
+  "stickerCreate": [
+    "sticker"
+  ],
+  "stickerDelete": [
+    "sticker"
+  ],
+  "stickerUpdate": [
+    "oldSticker",
+    "newSticker"
+  ],
+  "subscriptionCreate": [
+    "subscription"
+  ],
+  "subscriptionDelete": [
+    "subscription"
+  ],
+  "subscriptionUpdate": [
+    "oldSubscription",
+    "newSubscription"
+  ],
+  "guildScheduledEventCreate": [
+    "guildScheduledEvent"
+  ],
+  "guildScheduledEventUpdate": [
+    "oldGuildScheduledEvent",
+    "newGuildScheduledEvent"
+  ],
+  "guildScheduledEventDelete": [
+    "guildScheduledEvent"
+  ],
+  "guildScheduledEventUserAdd": [
+    "guildScheduledEvent",
+    "user"
+  ],
+  "guildScheduledEventUserRemove": [
+    "guildScheduledEvent",
+    "user"
+  ],
+  "soundboardSounds": [
+    "soundboardSounds",
+    "guild"
+  ]
+}

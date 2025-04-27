@@ -11,10 +11,12 @@ if (!fs.existsSync("./node_modules/discord.js/typings/index.d.ts")) {
     process.exit(1);
 }
 
-let content = fs.readFileSync("./node_modules/discord.js/typings/index.d.ts", "utf-8")
+let base = fs.readFileSync("./node_modules/discord.js/typings/index.d.ts", "utf-8")
     .replace(/\/\/[^\n]+/, "")
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .match(/interface ClientEvents \{[^\}]+\}/)?.[0]
+    .match(/interface ClientEvents \{[^\}]+\}/)?.[0] ?? "";
+
+let typeContent = base
     .replaceAll("[", "{")
     .replaceAll("]", "}")
     .replaceAll("ClientEvents", "TessenClientEvents")
@@ -25,7 +27,14 @@ let content = fs.readFileSync("./node_modules/discord.js/typings/index.d.ts", "u
     })
     ?? "";
 
-let blocks = content
+let mapContent = `export const TessenClientEventMap = ${JSON.stringify(Object.fromEntries([...(base.matchAll(/([a-zA-Z]+)\: (\[[^\]]+\])/g) ?? [])]
+    .map(([_, key, value]) => {
+        let mapKeys = [...(value.matchAll(/([a-zA-Z]+)\:/g) || [])].map(([_, key]) => key);
+        return [key, mapKeys];
+    })), null, 2)}`
+
+
+let blocks = typeContent
     .replace(/^[^\n]+/, "")
     .replace(/[^\n]+$/, "")
     .match(/\{[^\}]+\}/g) ?? []
@@ -46,8 +55,10 @@ for (const block of blocks) {
 for (const block of blocks) {
     if (!block.includes("\n")) {
         let newBlock = block.replace("{", "{ ").replace("}", " }");
-        content = content.replace(block, newBlock);
+        typeContent = typeContent.replace(block, newBlock);
     }
 }
 
-fs.writeFileSync("./src/lib/types/ClientEvents.ts", `import { ${toImport.join(", ")} } from "discord.js";\n\n${content}`, "utf-8");
+
+
+fs.writeFileSync("./src/lib/types/ClientEvents.ts", `import { ${toImport.join(", ")} } from "discord.js";\n\n${typeContent}\n\n${mapContent}`, "utf-8");

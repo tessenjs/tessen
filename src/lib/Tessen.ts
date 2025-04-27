@@ -99,4 +99,13 @@ export class Tessen extends Pack<TessenConfig> {
 
     this.events.emit("tessen:clientsReady", { clients: this.clients });
   }
+
+  override destroy(): void {
+    super.destroy();
+
+    this.clients.forEach((client) => {
+      client.client.destroy();
+      this.events.emit("tessen:clientDestroy", { client });
+    });
+  }
 }
