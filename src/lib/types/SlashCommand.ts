@@ -53,13 +53,13 @@ export type SlashCommandName<S extends string> =
       : ValidCombination<S> extends never
         ? never
         : S
-  
+
 export interface SlashCommand<N extends string = string> {
   id: string;
   name: N;
   nameCombinations: string[];
   description: string;
-  onExecute: (ctx: any) => Promise<void>;
+  handle: (ctx: any) => Promise<void>;
   options?: SlashCommandOption[];
 }
 

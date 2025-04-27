@@ -57,6 +57,7 @@ export function generateCombinations(pattern: string): string[] {
 
 // 1. Temel Örnek
 // const pattern1: string = "welcome (set|unset) (join|leave)";
+// ["welcome set join", "welcome set leave", "welcome unset join", "welcome unset leave", "welcome join", "welcome leave"]
 // const combinations1: string[] = generateCombinations(pattern1);
 // const combinations2: string[] = generateCombinations(pattern1);
 // console.log(`Kalıp: "${pattern1}"`);

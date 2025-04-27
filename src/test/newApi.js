@@ -1,5 +1,4 @@
 import { Tessen, Pack, Inspector, Locales } from 'tessen';
-
 // tessen pack'in extendidir
 const tessen = new Tessen();
 
@@ -56,10 +55,12 @@ pack.use(inspector);  // () => { } // unloader
 pack.use(locales);  // () => { } // unloader
 
 tessen.use(pack);  // () => { } // unloader
-
+tessen.use(chatCommandExtension({
+  prefix: "!"
+}))
 tessen.slashCommand({
   id: 'example',
-  name: 'example (command)?',
+  name: 'example (command)?', // []
   description: 'an example command',
   onExecute: (ctx) => {
     ctx.interaction.reply({
@@ -70,3 +71,5 @@ tessen.slashCommand({
 }); // () => { } // unloader
 
 tessen.start();
+
+// TODO: add proxy support for more rate limits, see @discordjs/proxy
