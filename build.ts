@@ -27,11 +27,14 @@ let typeContent = base
     })
     ?? "";
 
-let mapContent = `export const TessenClientEventMap = ${JSON.stringify(Object.fromEntries([...(base.matchAll(/([a-zA-Z]+)\: (\[[^\]]+\])/g) ?? [])]
+const eventMap = Object.fromEntries([...(base.matchAll(/([a-zA-Z]+)\: (\[[^\]]+\])/g) ?? [])]
     .map(([_, key, value]) => {
         let mapKeys = [...(value.matchAll(/([a-zA-Z]+)\:/g) || [])].map(([_, key]) => key);
         return [key, mapKeys];
-    })), null, 2)}`
+    }));
+
+eventMap["webhookUpdate"] = eventMap["webhooksUpdate"];
+let mapContent = `export const TessenClientEventMap = ${JSON.stringify(eventMap, null, 2)}`
 
 
 let blocks = typeContent

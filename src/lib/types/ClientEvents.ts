@@ -417,5 +417,8 @@ export const TessenClientEventMap = {
   "soundboardSounds": [
     "soundboardSounds",
     "guild"
+  ],
+  "webhookUpdate": [
+    "channel"
   ]
 }
