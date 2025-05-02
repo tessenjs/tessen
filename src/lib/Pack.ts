@@ -6,6 +6,8 @@ import { Usable } from "$types/Usable";
 import { SlashCommandName, SlashCommandConfig } from "$types/SlashCommand";
 import { Interaction } from "$types/Interactions";
 import { generateCombinations } from "$utils/pattern";
+import { CommandNameNoCombinationsError } from "./errors/CommandNameNoCombinationsError";
+import { CommandNameExceededMaxLengthError } from "./errors/CommandNameExceededMaxLengthError";
 import EventEmitter from "events";
 
 export interface PackConfig {
@@ -59,11 +61,31 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
     const nameCombinations = generateCombinations(cfg.name);
+    
+    this.isSlashCommandValid(cfg, nameCombinations);
+
     this.data.interactions.set(cfg.name, { ...cfg, nameCombinations });
 
     return () => this.data.interactions.delete(cfg.id);
   }
 
+  /**
+   * @throws {CommandNameNoCombinationsError} if the command has no name combinations.
+   * @throws {CommandNameExceededMaxLengthError} if the command has a name combination with more than 3 words or a word with more than 32 characters.
+   */
+  private isSlashCommandValid<T extends string>(cfg: SlashCommandConfig<T extends SlashCommandName<T> ? T : never>, nameCombinations: string[]) {
+    if (nameCombinations.length === 0)
+      throw new CommandNameNoCombinationsError({ message: `Interaction with id "${cfg.id}" has no name combinations.` });
+  
+    const nameCombinationsSplited = nameCombinations.map((name) => name.split(" "));
+
+    if (nameCombinationsSplited.some((name) => name.length > 3 || name.some((word) => word.length > 32))) 
+      throw new CommandNameExceededMaxLengthError({ 
+        message: `Interaction with id "${cfg.id}" has a name combination with more than 3 words. Or a word with more than 32 characters.`,
+        nameCombinationsSplited,
+      });
+    
+  }
   unload(...callbacks: DisposeCallback[]): void {
     this.unloaders.push(...callbacks);
   }

@@ -33,7 +33,9 @@ const eventMap = Object.fromEntries([...(base.matchAll(/([a-zA-Z]+)\: (\[[^\]]+\
         return [key, mapKeys];
     }));
 
-eventMap["webhookUpdate"] = eventMap["webhooksUpdate"];
+if (!eventMap["webhookUpdate"])
+    eventMap["webhookUpdate"] = eventMap["webhooksUpdate"];
+
 let mapContent = `export const TessenClientEventMap = ${JSON.stringify(eventMap, null, 2)}`
 
 

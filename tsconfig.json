@@ -113,6 +113,9 @@
       "$utils/*": [
         "./src/lib/utils/*"
       ],
+      "$errors/*": [
+        "./src/lib/errors/*"
+      ],
     },
     "plugins": [
       {
