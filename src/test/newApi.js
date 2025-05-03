@@ -1,3 +1,5 @@
+// tessen is a discord.js based library for creating bots
+// tessen syntax is similar to express.js
 import { Tessen, Pack, Inspector, Locales } from 'tessen';
 // tessen pack'in extendidir
 const tessen = new Tessen();
@@ -32,17 +34,20 @@ pack.event({
 
 })
 
-inspector.event({
-  name: 'exampleEvent', // '*' // '*' for all events
-  handle(ctx) { // return true/false to stop the event
-
+// Updated to use object-based parameter pattern only (no more string+function overload)
+inspector.chatInput({
+  pattern: 'system (set|unset) settings',
+  handle: (ctx) => {
+    // Handler code
   }
 });  // () => { } // unloader
 
-// 'system (set|unset) settings' minimatch glob
-inspector.chatInput('system (set|unset) settings', () => {
-
-})  // () => { } // unloader
+// Example of triggering a handler matching one of the generated combinations:
+inspector.emit({
+  type: 'chatInput',
+  id: 'system set settings', // This would be one of the combinations generated
+  ctx: contextObject
+});
 
 inspector.button({
   id: "",
