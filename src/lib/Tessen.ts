@@ -1,13 +1,17 @@
 import { Pack } from "$lib/Pack";
 import { Client, ClientOptions, Collection } from "discord.js";
 import { defaultify } from "stuffs"
+import { TessenDefaultTypes } from "./types/TessenDefaultTypes";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
 
 export interface TessenConfig {
   id: string;
-  clients: TessenConfigClient[]
+  clients: TessenConfigClient[];
+  options?: Partial<{
+    keyCasing: "SnakeCase" | "KebabCase";
+  }>
 }
 
 export type CacheData<T> = {
@@ -15,11 +19,11 @@ export type CacheData<T> = {
   data: T;
 }
 
-export class Tessen extends Pack<TessenConfig> {
+export class Tessen<TTessenTypes extends TessenDefaultTypes = TessenDefaultTypes> extends Pack<TTessenTypes, TessenConfig> {
 
   cache = {
     locales: new Collection<string, CacheData<any>>(),
-    subPacks: new Collection<string, CacheData<Pack>>(),
+    subPacks: new Collection<string, CacheData<Pack<TTessenTypes, TessenConfig>>>(),
     interactions: new Collection<string, CacheData<any>>(),
     events: new Collection<string, CacheData<any>>(),
     inspectors: new Collection<string, CacheData<any>>(),
@@ -33,6 +37,13 @@ export class Tessen extends Pack<TessenConfig> {
   clients = new Collection<string, TessenClient>();
 
   constructor(config: TessenConfig) {
+    config = defaultify(config, {
+      id: "tessen",
+      clients: [],
+      options: {
+        keyCasing: "SnakeCase",
+      },
+    }, true);
     super(config);
   }
 
@@ -66,7 +77,7 @@ export class Tessen extends Pack<TessenConfig> {
     }
   }
 
-  private pushCache(pack: Pack, path: string[] = []) {
+  private pushCache(pack: Pack<TTessenTypes, TessenConfig>, path: string[] = []) {
     pack.data.locales.forEach((locale, key) => this.cache.locales.set(key, { path, data: locale }));
     pack.data.interactions.forEach((interaction, key) => this.cache.interactions.set(key, { path, data: interaction }));
     pack.data.events.forEach((event, key) => this.cache.events.set(key, { path, data: event }));

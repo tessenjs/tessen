@@ -67,11 +67,22 @@ tessen.slashCommand({
   id: 'example',
   name: 'example (command)?', // []
   description: 'an example command',
-  onExecute: (ctx) => {
-    ctx.interaction.reply({
+  onExecute: ({ interaction }) => {
+    interaction.reply({
       content: 'Hello world',
       ephemeral: true
-    })
+    });
+
+    const { textValue, numberValue } = interaction.options();
+  },
+  options: {
+    textValue: {
+      type: "String", // "String" | "Number" | "Integer" | "Boolean",
+      autoComplete(ctx) {
+        interaction.value;
+        interaction.options();
+      }
+    }
   }
 }); // () => { } // unloader
 
