@@ -26,6 +26,7 @@
     "color-support": "^1.1.3",
     "discord.js": "^14.19.1",
     "kleur": "^4.1.5",
-    "stuffs": "^0.1.43"
+    "stuffs": "^0.1.43",
+    "yaml": "^2.8.0"
   }
 }

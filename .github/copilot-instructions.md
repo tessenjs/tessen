@@ -34,10 +34,25 @@ const locales = new Locale({ id: 'ExampleLocales' });
 
 pack.onUnload(
   locales.loadFile({
-    id: 'Example',
     filePath: 'example.json',
     path: '$',
+    language: 'en',
     type: "Content"
+  }),
+  locales.loadFile({
+    filePath: 'tr.yaml',
+    path: '$.interactions',
+    language: 'tr',
+    // this path should has something like this:
+    // interactions:
+    //   hello-world-command-id:
+    //     names:
+    //       hello: 'merhaba'
+    //       world: 'dünya'
+    //     description: 'A hello world command'
+    // ... etc.
+
+    type: "Interactions"
   }),
   locales.addLocale({
     id: "Example2",
@@ -47,7 +62,6 @@ pack.onUnload(
   locales.addInteractionLocale({
     id: "Example3",
     locale: "",
-    name: "system set settings",
     data: {}
   })
 )

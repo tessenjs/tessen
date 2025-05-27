@@ -3,6 +3,9 @@ import { TessenLocalizationMap } from "../../generated/localization";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import type { DISCORD_LOCALES } from "$utils/publishInteractions";
+import { readFileSync } from "fs";
+import { parse as parseYaml } from "yaml";
+import { extname } from "path";
 
 // Extract base language codes from Discord locales (e.g., "en-US" -> "en", "tr" -> "tr")
 export type Language = {
@@ -67,6 +70,8 @@ function convertToContentValue<T extends PlainLocaleData>(data: T): TransformToC
 export class Locale implements Identifiable {
     content = new Collection<Language, ContentValue>();
     interaction = new Collection<Language, Record<string, InteractionLocaleData>>();
+    private contents = new Collection<string, { language: Language; data: PlainLocaleData }>();
+    private interactions = new Collection<string, { language: Language; data: Record<string, InteractionLocaleData> }>();
     private unloaders: DisposeCallback[] = [];
     
     constructor(public config: LocaleConfig) {}
@@ -75,17 +80,149 @@ export class Locale implements Identifiable {
         return this.config.id;
     }
 
+    private mergeContentsForLanguage(language: Language): ContentValue {
+        const languageContents = Array.from(this.contents.values())
+            .filter(item => item.language === language)
+            .map(item => item.data);
+        
+        if (languageContents.length === 0) {
+            return {} as ContentValue;
+        }
+        
+        // Deep merge all contents for this language
+        const merged = this.deepMerge(...languageContents);
+        return convertToContentValue(merged);
+    }
+
+    private deepMerge(...objects: PlainLocaleData[]): PlainLocaleData {
+        const result: PlainLocaleData = {};
+        
+        for (const obj of objects) {
+            for (const [key, value] of Object.entries(obj)) {
+                if (typeof value === 'string') {
+                    result[key] = value;
+                } else if (typeof value === 'object' && value !== null) {
+                    if (typeof result[key] === 'object' && result[key] !== null && typeof result[key] !== 'string') {
+                        result[key] = this.deepMerge(result[key] as PlainLocaleData, value);
+                    } else {
+                        result[key] = this.deepMerge({}, value);
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    private recalculateContentForLanguage(language: Language): void {
+        const mergedContent = this.mergeContentsForLanguage(language);
+        if (Object.keys(mergedContent).length > 0) {
+            this.content.set(language, mergedContent);
+        } else {
+            this.content.delete(language);
+        }
+    }
+
+    private extractFromPath(data: any, path: string): any {
+        if (path === '$') return data;
+        
+        // Remove leading $ and split by dots
+        const segments = path.replace(/^\$\.?/, '').split('.');
+        let current = data;
+        
+        for (const segment of segments) {
+            if (current === null || current === undefined) return undefined;
+            current = current[segment];
+        }
+        
+        return current;
+    }
+
+    private parseFileContent(filePath: string): any {
+        const content = readFileSync(filePath, 'utf-8');
+        const ext = extname(filePath).toLowerCase();
+        
+        switch (ext) {
+            case '.json':
+                return JSON.parse(content);
+            case '.yaml':
+            case '.yml':
+                return parseYaml(content);
+            default:
+                throw new Error(`Unsupported file format: ${ext}. Supported formats: .json, .yaml, .yml`);
+        }
+    }
+
+    private recalculateInteractionsForLanguage(language: Language): void {
+        const languageInteractions = Array.from(this.interactions.values())
+            .filter(item => item.language === language)
+            .map(item => item.data);
+        
+        if (languageInteractions.length === 0) {
+            this.interaction.delete(language);
+            return;
+        }
+        
+        // Merge all interaction data for this language
+        const merged: Record<string, InteractionLocaleData> = {};
+        for (const interactionData of languageInteractions) {
+            Object.assign(merged, interactionData);
+        }
+        
+        this.interaction.set(language, merged);
+    }
+
     loadFile(cfg: {
         id: string;
         filePath: string;
-        path: string;
-        type: "Content" | "Interaction";
+        path: string;  // to root path
+        language: Language;
+        type: "Content" | "Interactions";
     }): DisposeCallback {
-        // Implementation for loading locale files
-        // This would typically read from the file system, parse JSON, and convert to ContentValue
-        return () => {
-            // Cleanup logic for removing loaded locale data
-        };
+        try {
+            // Parse the file content
+            const fileData = this.parseFileContent(cfg.filePath);
+            
+            // Extract data from the specified path
+            const extractedData = this.extractFromPath(fileData, cfg.path);
+            
+            if (!extractedData) {
+                throw new Error(`No data found at path "${cfg.path}" in file "${cfg.filePath}"`);
+            }
+
+            if (cfg.type === "Content") {
+                // Handle content locales - extracted data is the content for the specified language
+                const contentId = `${cfg.id}_${cfg.language}`;
+                this.contents.set(contentId, {
+                    language: cfg.language,
+                    data: extractedData as PlainLocaleData
+                });
+                this.recalculateContentForLanguage(cfg.language);
+            } else if (cfg.type === "Interactions") {
+                // Handle interaction locales - extracted data should be interaction data for the specified language
+                const interactionId = `${cfg.id}_${cfg.language}`;
+                this.interactions.set(interactionId, {
+                    language: cfg.language,
+                    data: extractedData as Record<string, InteractionLocaleData>
+                });
+                this.recalculateInteractionsForLanguage(cfg.language);
+            }
+
+            return () => {
+                // Cleanup logic for removing loaded locale data
+                if (cfg.type === "Content") {
+                    const contentId = `${cfg.id}_${cfg.language}`;
+                    this.contents.delete(contentId);
+                    this.recalculateContentForLanguage(cfg.language);
+                } else if (cfg.type === "Interactions") {
+                    const interactionId = `${cfg.id}_${cfg.language}`;
+                    this.interactions.delete(interactionId);
+                    this.recalculateInteractionsForLanguage(cfg.language);
+                }
+            };
+        } catch (error) {
+            throw new Error(`Failed to load locale file "${cfg.filePath}": ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     addLocale(cfg: {
@@ -93,19 +230,24 @@ export class Locale implements Identifiable {
         locale: Language;
         data: PlainLocaleInputData;
     }): DisposeCallback {
-        // Convert plain object to ContentValue with function endpoints
-        const contentValue = convertToContentValue(cfg.data as PlainLocaleData);
-        this.content.set(cfg.locale, contentValue as ContentValue);
+        // Store the content source
+        this.contents.set(cfg.id, { 
+            language: cfg.locale, 
+            data: cfg.data as PlainLocaleData 
+        });
+        
+        // Recalculate merged content for this language
+        this.recalculateContentForLanguage(cfg.locale);
         
         return () => {
-            this.content.delete(cfg.locale);
+            this.contents.delete(cfg.id);
+            this.recalculateContentForLanguage(cfg.locale);
         };
     }
 
     addInteractionLocale(cfg: {
         id: string;
         locale: Language;
-        name: string;
         data: CommandInteractionLocale | ContextMenuLocale;
     }): DisposeCallback {
         const currentData = this.interaction.get(cfg.locale) || {};
@@ -135,12 +277,13 @@ export class Locale implements Identifiable {
         this.unloaders.length = 0;
         this.content.clear();
         this.interaction.clear();
+        this.contents.clear();
+        this.interactions.clear();
     }
 }
 
 export type CommandInteractionLocale = {
     names?: { [k: string]: string }; // Multiple patterns for single command translations
-    name?: string; // Single name for simple commands
     description?: string; // Description of the command
     options?: { [optionName: string]: CommandInteractionLocaleOption }; // Key is the option name (from Tessen's options object keys)
 }

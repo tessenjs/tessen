@@ -73,9 +73,13 @@ const interactionLocaleUnloaders = [
   locales.addInteractionLocale({
     id: 'gender-command',
     locale: 'tr',
-    name: 'gender',
     data: {
-      name: 'cinsiyet',
+      names: {
+        'lookup': 'bakın',
+        'look': 'bak',
+        'gender': 'cinsiyet',
+        'genders': 'cinsiyetler',
+      },
       description: 'Cinsiyetinizi seçin',
       options: {
         choice: {
@@ -95,9 +99,13 @@ const interactionLocaleUnloaders = [
   locales.addInteractionLocale({
     id: 'gender-command',
     locale: 'es' as any,
-    name: 'gender',
     data: {
-      name: 'genero',
+      names: {
+        'lookup': 'buscar',
+        'look': 'ver',
+        'gender': 'género',
+        'genders': 'géneros'
+      },
       description: 'Selecciona tu género',
       options: {
         choice: {
@@ -117,7 +125,7 @@ const interactionLocaleUnloaders = [
 // Register slash command with localization - target primary bot
 const genderCommandUnloader = commandPack.slashCommand({
   id: 'gender-command',
-  name: 'gender',
+  name: '(lookup|look) (gender|genders)',
   description: 'Select your gender',
   clientId: 'primary-bot', // This command will only be published to the primary bot
   options: {
