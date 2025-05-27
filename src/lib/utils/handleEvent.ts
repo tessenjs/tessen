@@ -2,6 +2,7 @@ import { Tessen, TessenClient } from "$lib/Tessen";
 import { TessenClientEventMap } from "$types/ClientEvents";
 import { ContentValue } from "$lib/Locale";
 import { Guild, User, Interaction } from "discord.js";
+import { handleInteraction } from "./handleInteraction";
 
 // Helper to extract guild, user, and interaction from event context
 function extractContextInfo(eventName: string, args: any[]): { guild: Guild | null, user: User | null, interaction: Interaction | null } {
@@ -83,6 +84,11 @@ export async function handleEvent(
     const context = Object.fromEntries(
       eventParams.map((param, index) => [param, args[index]])
     );
+
+    // Handle interaction events separately
+    if (eventName === 'interactionCreate' && context.interaction) {
+      await handleInteraction(tessen, client, context.interaction as Interaction);
+    }
 
     // Extract guild, user, and interaction for localization
     const { guild, user, interaction } = extractContextInfo(eventName, args);

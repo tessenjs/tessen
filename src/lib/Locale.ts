@@ -2,8 +2,12 @@ import { Collection } from "discord.js";
 import { TessenLocalizationMap } from "../../generated/localization";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
+import type { DISCORD_LOCALES } from "$utils/publishInteractions";
 
-export type Language = "tr" | "en" | "...";
+// Extract base language codes from Discord locales (e.g., "en-US" -> "en", "tr" -> "tr")
+export type Language = {
+  [K in typeof DISCORD_LOCALES[number]]: K extends `${infer Base}-${string}` ? Base : K
+}[typeof DISCORD_LOCALES[number]];
 
 // Internal storage format with function capabilities
 export interface ContentValue {

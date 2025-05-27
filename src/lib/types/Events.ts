@@ -32,8 +32,7 @@ export interface CustomEventRegistrationConfig<T = any, TessenId extends string 
 
 // Union type for all event registration configs
 export type AnyEventRegistrationConfig<TessenId extends string = string> = 
-  | { [K in keyof TessenClientEvents]: EventRegistrationConfig<K, TessenId> }[keyof TessenClientEvents]
-  | CustomEventRegistrationConfig<any, TessenId>;
+  | { [K in keyof TessenClientEvents]: EventRegistrationConfig<K, TessenId> }[keyof TessenClientEvents];
 
 // Event data interface for storage
 export interface EventData {
