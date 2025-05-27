@@ -1,62 +1,20 @@
 import { Tessen, TessenClient } from "$lib/Tessen";
 import { Interaction as DiscordInteraction, Guild, User } from "discord.js";
 import { ContentValue } from "$lib/Locale";
-import { ChatInputInteractionWrapper, ButtonInteractionWrapper, SelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper } from "$types/Interactions";
-
-// Helper function to create localization methods
-function createLocalizationMethods<TessenId extends string>(
-  tessenId: TessenId,
-  tessen: Tessen,
-  guild: Guild | null,
-  interaction: DiscordInteraction
-) {
-  const getLocalization = () => {
-    // Check if tessenId exists in generated localization
-    const generated = tessen.locales.content.get('en') as any; // Default to 'en'
-    if (generated && generated[tessenId]) {
-      return generated[tessenId];
-    }
-    // Fallback to ContentValue interface
-    return tessen.locales.content.get('en') || {} as ContentValue;
-  };
-
-  const getGuildLocalization = (targetGuild: Guild | null) => {
-    const guildLocale = targetGuild?.preferredLocale?.split('-')[0] || 'en';
-    const localeData = tessen.locales.content.get(guildLocale) || tessen.locales.content.get('en');
-    
-    if (localeData && (localeData as any)[tessenId]) {
-      return (localeData as any)[tessenId];
-    }
-    return localeData || {} as ContentValue;
-  };
-
-  const getUserLocalization = (targetUser: User) => {
-    const userLocale = interaction.locale?.split('-')[0] || 'en';
-    const localeData = tessen.locales.content.get(userLocale) || tessen.locales.content.get('en');
-    
-    if (localeData && (localeData as any)[tessenId]) {
-      return (localeData as any)[tessenId];
-    }
-    return localeData || {} as ContentValue;
-  };
-
-  return {
-    getLocalization,
-    getGuildLocalization,
-    getUserLocalization
-  };
-}
+import { ChatInputInteractionWrapper, ButtonInteractionWrapper, SelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper, AutocompleteInteractionWrapper } from "$types/Interactions";
+import { AutocompleteInteraction, ApplicationCommandOptionType } from "discord.js";
+import { SlashCommandOptionChoices } from "$types/SlashCommand";
 
 // Helper function to create localization objects for interactions
 function createInteractionLocalizationObjects<TessenId extends string>(
   tessenId: TessenId,
   tessen: Tessen,
   guild: Guild | null,
-  interaction: any
+  interaction: DiscordInteraction
 ) {
   const defaultLocalization = tessen.locales.content.get('en') || {} as ContentValue;
   const guildLocale = guild?.preferredLocale?.split('-')[0] || 'en';
-  const userLocale = interaction?.locale?.split('-')[0] || guildLocale;
+  const userLocale = interaction.locale?.split('-')[0] || guildLocale;
   
   const guildLocalization = tessen.locales.content.get(guildLocale) || defaultLocalization;
   const userLocalization = tessen.locales.content.get(userLocale) || defaultLocalization;
@@ -75,7 +33,9 @@ export async function handleInteraction(
   interaction: DiscordInteraction
 ) {
   try {
-    if (interaction.isChatInputCommand()) {
+    if (interaction.isAutocomplete()) {
+      await handleAutocompleteInteraction(tessen, client, interaction);
+    } else if (interaction.isChatInputCommand()) {
       await handleChatInputCommand(tessen, client, interaction);
     } else if (interaction.isUserContextMenuCommand()) {
       await handleUserContextMenuCommand(tessen, client, interaction);
@@ -97,6 +57,104 @@ export async function handleInteraction(
   }
 }
 
+async function handleAutocompleteInteraction(
+  tessen: Tessen,
+  client: TessenClient,
+  interaction: AutocompleteInteraction
+) {
+  const commandName = interaction.commandName;
+  const subcommand = interaction.options.getSubcommand(false);
+  const subcommandGroup = interaction.options.getSubcommandGroup(false);
+  
+  // Build full command name
+  let fullCommandName = commandName;
+  if (subcommandGroup) fullCommandName += ` ${subcommandGroup}`;
+  if (subcommand) fullCommandName += ` ${subcommand}`;
+
+  const discordFocusedOption = interaction.options.getFocused(true);
+  
+  // Transform Discord.js enum type to our string type
+  const getOptionTypeString = (type: ApplicationCommandOptionType): "String" | "Integer" | "Number" => {
+    switch (type) {
+      case ApplicationCommandOptionType.String:
+        return "String";
+      case ApplicationCommandOptionType.Integer:
+        return "Integer";
+      case ApplicationCommandOptionType.Number:
+        return "Number";
+      default:
+        return "String"; // Fallback
+    }
+  };
+
+  const focusedOption = {
+    name: discordFocusedOption.name,
+    value: discordFocusedOption.value,
+    type: getOptionTypeString(discordFocusedOption.type)
+  };
+
+  const localizationObjects = createInteractionLocalizationObjects(
+    tessen.id,
+    tessen,
+    interaction.guild,
+    interaction
+  );
+
+  const wrapper: AutocompleteInteractionWrapper = {
+    type: 'autocomplete',
+    interaction,
+    commandName: fullCommandName,
+    focusedOption,
+    ...localizationObjects
+  };
+
+  // Find the matching slash command
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interactionData = cachedInteraction.data;
+    
+    // Check if it's a slash command with nameCombinations property
+    if ('nameCombinations' in interactionData && 
+        interactionData.nameCombinations?.includes(fullCommandName) && 
+        (!interactionData.type || interactionData.type === 'ChatInput') &&
+        'options' in interactionData && interactionData.options) {
+      
+      const option = interactionData.options[focusedOption.name];
+      if (option && 'autoComplete' in option && option.autoComplete) {
+        try {
+          const autocompleteContext = {
+            value: focusedOption.value,
+            focused: true,
+            interaction
+          };
+
+          const choices = await option.autoComplete(autocompleteContext);
+          
+          // Convert object-based choices to Discord.js format
+          const discordChoices = Object.entries(choices).map(([value, name]) => ({
+            name: String(name),
+            value: option.type === 'String' ? String(value) : Number(value)
+          })).slice(0, 25); // Discord limits to 25 choices
+
+          await interaction.respond(discordChoices);
+          return;
+        } catch (error) {
+          tessen.events.emit('tessen:autocompleteError', {
+            error,
+            interaction,
+            option: focusedOption.name,
+            client
+          });
+          await interaction.respond([]);
+          return;
+        }
+      }
+    }
+  }
+
+  // If no autocomplete function found, respond with empty array
+  await interaction.respond([]);
+}
+
 async function handleChatInputCommand(
   tessen: Tessen,
   client: TessenClient,
@@ -111,13 +169,6 @@ async function handleChatInputCommand(
   if (subcommandGroup) fullCommandName += ` ${subcommandGroup}`;
   if (subcommand) fullCommandName += ` ${subcommand}`;
 
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -129,7 +180,6 @@ async function handleChatInputCommand(
     type: 'chatInput',
     interaction,
     commandName: fullCommandName,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -137,9 +187,10 @@ async function handleChatInputCommand(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    // Check if it's a slash command with matching name combinations
-    if (interactionData.nameCombinations?.includes(fullCommandName) && 
-        (!interactionData.type || interactionData.type === 'CHAT_INPUT')) {
+    // Check if it's a slash command with nameCombinations property
+    if ('nameCombinations' in interactionData && 
+        interactionData.nameCombinations?.includes(fullCommandName) && 
+        (!interactionData.type || interactionData.type === 'ChatInput')) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -164,13 +215,6 @@ async function handleUserContextMenuCommand(
 ) {
   const commandName = interaction.commandName;
 
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -182,7 +226,6 @@ async function handleUserContextMenuCommand(
     type: 'userContextMenu',
     interaction,
     commandName,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -190,7 +233,7 @@ async function handleUserContextMenuCommand(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'USER' && interactionData.name === commandName) {
+    if (interactionData.type === 'User' && interactionData.name === commandName) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -215,13 +258,6 @@ async function handleMessageContextMenuCommand(
 ) {
   const commandName = interaction.commandName;
 
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -233,7 +269,6 @@ async function handleMessageContextMenuCommand(
     type: 'messageContextMenu',
     interaction,
     commandName,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -241,7 +276,7 @@ async function handleMessageContextMenuCommand(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'MESSAGE' && interactionData.name === commandName) {
+    if (interactionData.type === 'Message' && interactionData.name === commandName) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -264,13 +299,6 @@ async function handleButtonInteraction(
   client: TessenClient,
   interaction: ButtonInteractionWrapper['interaction']
 ) {
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -282,7 +310,6 @@ async function handleButtonInteraction(
     type: 'button',
     interaction,
     customId: interaction.customId,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -290,7 +317,7 @@ async function handleButtonInteraction(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'BUTTON' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'Button' && interactionData.id === interaction.customId) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -313,13 +340,6 @@ async function handleSelectMenuInteraction(
   client: TessenClient,
   interaction: SelectMenuInteractionWrapper['interaction']
 ) {
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -331,7 +351,6 @@ async function handleSelectMenuInteraction(
     type: 'selectMenu',
     interaction,
     customId: interaction.customId,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -339,7 +358,7 @@ async function handleSelectMenuInteraction(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'SELECT_MENU' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'SelectMenu' && interactionData.id === interaction.customId) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -362,13 +381,6 @@ async function handleModalSubmitInteraction(
   client: TessenClient,
   interaction: ModalInteractionWrapper['interaction']
 ) {
-  const localizationMethods = createLocalizationMethods(
-    tessen.id,
-    tessen,
-    interaction.guild,
-    interaction
-  );
-
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -380,7 +392,6 @@ async function handleModalSubmitInteraction(
     type: 'modal',
     interaction,
     customId: interaction.customId,
-    ...localizationMethods,
     ...localizationObjects
   };
 
@@ -388,7 +399,7 @@ async function handleModalSubmitInteraction(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'MODAL' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'Modal' && interactionData.id === interaction.customId) {
       await interactionData.handle(wrapper);
       return;
     }

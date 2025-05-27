@@ -16,6 +16,9 @@ Module features:
 
 - Use object-based parameters for methods instead of string+function overloads.
 - For better performance, map every event and interaction to a single map, for handling to be faster.
+- Use PascalCase for constants.
+- Don't use enums, use string arrays generaly. If a discord.js enum is provided, use it with keyof typeof.
+
 
 # Final Product Example
 ```ts
@@ -106,43 +109,36 @@ tessen.slashCommand({
       ephemeral: true
     })
   },
-  options: [
-    {
-      name: 'option1',
+  options: {
+    option1: {
       description: 'an example option',
       type: 'String', // do not include subcommand and subcommand group options here, they are handled name pattern of the slash command
       required: true
     },
-    {
-      name: 'option2',
+    option2: {
       description: 'another example option',
       type: 'Integer',
       required: false,
-      choices: [
-        {
-          name: 'Choice 1',
-          value: 1
-        },
-        {
-          name: 'Choice 2',
-          value: 2
-        }
-      ]
+      choices: {
+        1: 'Choice 1',
+        2: 'Choice 2',
+        3: 'Choice 3'
+      }
     },
-    {
-      name: 'option3',
-      description: 'a boolean option',
-      type: 'Boolean',
+    option3: {
+      description: 'a autocomplete option',
+      type: 'Integer',
       required: false,
       autoComplete: async (ctx) => {
         ctx.value; // The current value user is typing
-        return [
-          { name: 'Yes', value: true },
-          { name: 'No', value: false }
-        ];
+        return {
+          1: 'Choice 1',
+          2: 'Choice 2',
+          3: 'Choice 3'
+        }
       }
     }
-  ]
+  }
 }); // () => { } // unloader
 
 tessen.start();

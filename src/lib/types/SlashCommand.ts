@@ -49,7 +49,7 @@ export type SlashCommandName<S extends string> =
         ? never
         : S
 
-export type SlashCommandType = 'CHAT_INPUT' | 'USER' | 'MESSAGE';
+export type SlashCommandType = 'ChatInput' | 'User' | 'Message';
 
 // Discord.js Application Command Option Types (excluding Subcommand and SubcommandGroup)
 export type SlashCommandOptionType = 
@@ -65,16 +65,12 @@ export type SlashCommandOptionType =
 
 // Base option interface
 export interface BaseSlashCommandOption {
-  name: string;
   description: string;
   required?: boolean;
 }
 
-// Option choice interface
-export interface SlashCommandOptionChoice<T = string | number> {
-  name: string;
-  value: T;
-}
+// Option choice interface - now using object notation
+export type SlashCommandOptionChoices<T = string | number> = Record<T extends string ? string : number, string>;
 
 // Autocomplete context for dynamic options
 export interface AutocompleteContext {
@@ -83,38 +79,32 @@ export interface AutocompleteContext {
   interaction: AutocompleteInteraction; // The autocomplete interaction
 }
 
-// String option - strict union for choices vs autocomplete
+// Generic type for choices or autocomplete functionality
+export type OptionChoicesOrAutocomplete<T extends string | number> = 
+  | { choices: SlashCommandOptionChoices<T>; autoComplete?: never; }
+  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoices<T>> | SlashCommandOptionChoices<T>; choices?: never; }
+  | { choices?: never; autoComplete?: never; };
+
+// String option - using generic choices/autocomplete type
 export type StringSlashCommandOption = BaseSlashCommandOption & {
   type: 'String';
   minLength?: number;
   maxLength?: number;
-} & (
-  | { choices: SlashCommandOptionChoice<string>[]; autoComplete?: never; }
-  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<string>[]> | SlashCommandOptionChoice<string>[]; choices?: never; }
-  | { choices?: never; autoComplete?: never; }
-);
+} & OptionChoicesOrAutocomplete<string>;
 
-// Integer option - strict union for choices vs autocomplete
+// Integer option - using generic choices/autocomplete type
 export type IntegerSlashCommandOption = BaseSlashCommandOption & {
   type: 'Integer';
   minValue?: number;
   maxValue?: number;
-} & (
-  | { choices: SlashCommandOptionChoice<number>[]; autoComplete?: never; }
-  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<number>[]> | SlashCommandOptionChoice<number>[]; choices?: never; }
-  | { choices?: never; autoComplete?: never; }
-);
+} & OptionChoicesOrAutocomplete<number>;
 
-// Number option - strict union for choices vs autocomplete
+// Number option - using generic choices/autocomplete type
 export type NumberSlashCommandOption = BaseSlashCommandOption & {
   type: 'Number';
   minValue?: number;
   maxValue?: number;
-} & (
-  | { choices: SlashCommandOptionChoice<number>[]; autoComplete?: never; }
-  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<number>[]> | SlashCommandOptionChoice<number>[]; choices?: never; }
-  | { choices?: never; autoComplete?: never; }
-);
+} & OptionChoicesOrAutocomplete<number>;
 
 // Boolean option
 export interface BooleanSlashCommandOption extends BaseSlashCommandOption {
@@ -159,18 +149,23 @@ export type SlashCommandOption =
   | MentionableSlashCommandOption
   | AttachmentSlashCommandOption;
 
+// Object-based options type
+export type SlashCommandOptions = Record<string, SlashCommandOption>;
+
 // Registration config type that includes all properties
 export interface SlashCommandRegistrationConfig<T extends string> {
   id: string;
   name: T;
   description: string;
   handle: (ctx: ChatInputInteractionWrapper) => void | Promise<void>;
-  options?: SlashCommandOption[];
+  options?: SlashCommandOptions;
   defaultMemberPermissions?: (keyof PermissionFlags)[];
-  contexts?: InteractionContextType[];
+  contexts?: (keyof typeof InteractionContextType)[];
   nsfw?: boolean;
+  type?: 'ChatInput';
 }
 
 export interface SlashCommand<N extends string = string> extends SlashCommandRegistrationConfig<N> {
+  type: 'ChatInput';
   nameCombinations: string[];
 }

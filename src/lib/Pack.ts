@@ -20,6 +20,7 @@ import { CommandNameExceededMaxLengthError } from "./errors/CommandNameExceededM
 import { Inspector } from "$lib/Inspector";
 import EventEmitter from "events";
 import { AnyEventRegistrationConfig, EventData } from "$types/Events";
+import { Locale } from "$lib/Locale";
 
 export interface PackConfig {
   id: string;
@@ -30,11 +31,11 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
   private unloaders: DisposeCallback[] = [];
 
   data = {
-    locales: new Collection<string, any>(),
+    locales: new Collection<string, Locale>(),
     subPacks: new Collection<string, Pack>(),
     interactions: new Collection<string, Interaction>(),
     events: new Collection<string, EventData>(),
-    inspectors: new Collection<string, any>(),
+    inspectors: new Collection<string, Inspector>(),
   }
 
   events = new EventEmitter();
@@ -82,6 +83,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const slashCommand: SlashCommand = {
       ...cfg,
+      type: 'ChatInput',
       nameCombinations
     };
 
@@ -109,7 +111,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const contextMenuCommand: UserContextMenuCommand = {
       ...cfg,
-      type: 'USER'
+      type: 'User'
     };
 
     this.data.interactions.set(cfg.id, contextMenuCommand);
@@ -123,7 +125,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const contextMenuCommand: MessageContextMenuCommand = {
       ...cfg,
-      type: 'MESSAGE'
+      type: 'Message'
     };
 
     this.data.interactions.set(cfg.id, contextMenuCommand);
@@ -137,7 +139,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const buttonInteraction = {
       ...cfg,
-      type: 'BUTTON' as const
+      type: 'Button' as const
     };
 
     this.data.interactions.set(cfg.id, buttonInteraction);
@@ -151,7 +153,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const selectMenuInteraction = {
       ...cfg,
-      type: 'SELECT_MENU' as const
+      type: 'SelectMenu' as const
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -165,7 +167,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
 
     const modalInteraction = {
       ...cfg,
-      type: 'MODAL' as const
+      type: 'Modal' as const
     };
 
     this.data.interactions.set(cfg.id, modalInteraction);

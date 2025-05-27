@@ -3,6 +3,10 @@ import { Client, ClientOptions, Collection } from "discord.js";
 import { defaultify } from "stuffs"
 import { handleEvent } from "$utils/handleEvent";
 import { TessenClientEventMap } from "$types/ClientEvents";
+import { Interaction } from "$types/Interactions";
+import { EventData } from "$types/Events";
+import { Inspector } from "$lib/Inspector";
+import { ContentValue, Locale } from "$lib/Locale";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
@@ -20,16 +24,16 @@ export type CacheData<T> = {
 export class Tessen<ID extends string = string> extends Pack<TessenConfig> {
 
   cache = {
-    locales: new Collection<string, CacheData<any>>(),
+    locales: new Collection<string, CacheData<Locale>>(),
     subPacks: new Collection<string, CacheData<Pack>>(),
-    interactions: new Collection<string, CacheData<any>>(),
-    events: new Collection<string, CacheData<any>>(),
-    inspectors: new Collection<string, CacheData<any>>(),
+    interactions: new Collection<string, CacheData<Interaction>>(),
+    events: new Collection<string, CacheData<EventData>>(),
+    inspectors: new Collection<string, CacheData<Inspector>>(),
   }
 
   locales = {
-    content: new Collection<string, any>(),
-    interaction: new Collection<string, any>(),
+    content: new Collection<string, ContentValue>(),
+    interaction: new Collection<string, Record<string, unknown>>(),
   }
 
   clients = new Collection<string, TessenClient>();
@@ -58,13 +62,19 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig> {
     this.pushCache(this);
 
     for (const [key, value] of this.cache.locales) {
-      let currentContentLocale = (this.locales.content.get(value.data.language) ?? {});
-      currentContentLocale = defaultify(value.data.contentLocale, currentContentLocale, true);
-      this.locales.content.set(value.data.language, currentContentLocale);
+      const locale = value.data;
+      
+      for (const [language, contentValue] of locale.content) {
+        let currentContentLocale = (this.locales.content.get(language) ?? {});
+        currentContentLocale = defaultify(contentValue, currentContentLocale, true);
+        this.locales.content.set(language, currentContentLocale);
+      }
 
-      let currentInteractionLocale = (this.locales.interaction.get(value.data.language) ?? {});
-      currentInteractionLocale = defaultify(value.data.interactionLocale, currentInteractionLocale, true);
-      this.locales.interaction.set(value.data.language, currentInteractionLocale);
+      for (const [language, interactionValue] of locale.interaction) {
+        let currentInteractionLocale = (this.locales.interaction.get(language) ?? {});
+        currentInteractionLocale = defaultify(interactionValue, currentInteractionLocale, true);
+        this.locales.interaction.set(language, currentInteractionLocale);
+      }
     }
   }
 
@@ -85,7 +95,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig> {
     for (const tessenClient of this.clients.values()) {
       const originalEmit = tessenClient.client.emit.bind(tessenClient.client);
 
-      tessenClient.client.emit = (event: string, ...args: any[]) => {
+      tessenClient.client.emit = (event: string, ...args: unknown[]) => {
         // Handle known Discord.js events through our system
         if (event in TessenClientEventMap) {
           handleEvent(this, tessenClient, event as keyof typeof TessenClientEventMap, args);

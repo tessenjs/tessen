@@ -14,7 +14,9 @@ import {
   MessageContextMenuCommandInteraction,
   Message,
   Guild,
-  User
+  User,
+  AutocompleteInteraction,
+  ApplicationCommandOptionType
 } from "discord.js";
 
 // Localization helper type with direct locale access
@@ -62,6 +64,17 @@ export interface MessageContextMenuInteractionWrapper<TessenId extends string = 
   commandName: string;
 }
 
+export interface AutocompleteInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+  type: 'autocomplete';
+  interaction: AutocompleteInteraction;
+  commandName: string;
+  focusedOption: {
+    name: string;
+    value: string;
+    type: "String" | "Integer" | "Number";
+  };
+}
+
 // Registration configs
 export interface UserContextMenuRegistrationConfig<T extends string> {
   id: string;
@@ -93,19 +106,19 @@ export interface ModalRegistrationConfig {
 // Existing interaction data interfaces
 export interface ButtonInteractionData {
   id: string;
-  type: 'BUTTON';
+  type: 'Button';
   handle: (ctx: ButtonInteractionWrapper) => void | Promise<void>;
 }
 
 export interface SelectMenuInteractionData {
   id: string;
-  type: 'SELECT_MENU';
+  type: 'SelectMenu';
   handle: (ctx: SelectMenuInteractionWrapper) => void | Promise<void>;
 }
 
 export interface ModalInteractionData {
   id: string;
-  type: 'MODAL';
+  type: 'Modal';
   handle: (ctx: ModalInteractionWrapper) => void | Promise<void>;
 }
 
@@ -113,17 +126,17 @@ export interface ModalInteractionData {
 export interface UserContextMenuCommand {
   id: string;
   name: string;
-  type: 'USER';
+  type: 'User';
   handle: (ctx: UserContextMenuInteractionWrapper) => void | Promise<void>;
 }
 
 export interface MessageContextMenuCommand {
   id: string;
   name: string;
-  type: 'MESSAGE';
+  type: 'Message';
   handle: (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void>;
 }
 
 export type MessageInteraction = ChatInputInteractionWrapper;
-export type ActionInteraction = ButtonInteractionWrapper | SelectMenuInteractionWrapper | ModalInteractionWrapper | UserContextMenuInteractionWrapper | MessageContextMenuInteractionWrapper;
+export type ActionInteraction = ButtonInteractionWrapper | SelectMenuInteractionWrapper | ModalInteractionWrapper | UserContextMenuInteractionWrapper | MessageContextMenuInteractionWrapper | AutocompleteInteractionWrapper;
 export type Interaction = MessageInteraction | ActionInteraction | SlashCommand | UserContextMenuCommand | MessageContextMenuCommand | ButtonInteractionData | SelectMenuInteractionData | ModalInteractionData;

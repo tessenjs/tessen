@@ -1,16 +1,16 @@
 import { Tessen, TessenClient } from "$lib/Tessen";
 import { TessenClientEventMap } from "$types/ClientEvents";
 import { ContentValue } from "$lib/Locale";
-import { Guild, User } from "discord.js";
+import { Guild, User, Interaction } from "discord.js";
 
 // Helper to extract guild, user, and interaction from event context
-function extractContextInfo(eventName: string, args: any[]): { guild: Guild | null, user: User | null, interaction: any | null } {
+function extractContextInfo(eventName: string, args: any[]): { guild: Guild | null, user: User | null, interaction: Interaction | null } {
   const eventParams = TessenClientEventMap[eventName as keyof typeof TessenClientEventMap];
   if (!eventParams) return { guild: null, user: null, interaction: null };
 
   let guild: Guild | null = null;
   let user: User | null = null;
-  let interaction: any | null = null;
+  let interaction: Interaction | null = null;
 
   // Map the args to their parameter names and extract guild/user/interaction
   const context = Object.fromEntries(
@@ -18,13 +18,13 @@ function extractContextInfo(eventName: string, args: any[]): { guild: Guild | nu
   );
 
   // Extract interaction first
-  if (context.interaction) {
-    interaction = context.interaction;
+  if (context.interaction && typeof context.interaction === 'object' && 'isCommand' in context.interaction) {
+    interaction = context.interaction as Interaction;
   }
 
   // Try to extract guild from common patterns
-  if (context.guild) {
-    guild = context.guild;
+  if (context.guild && typeof context.guild === 'object' && 'id' in context.guild) {
+    guild = context.guild as Guild;
   } else if (context.member?.guild) {
     guild = context.member.guild;
   } else if (context.message?.guild) {
@@ -34,8 +34,8 @@ function extractContextInfo(eventName: string, args: any[]): { guild: Guild | nu
   }
 
   // Try to extract user from common patterns
-  if (context.user) {
-    user = context.user;
+  if (context.user && typeof context.user === 'object' && 'id' in context.user) {
+    user = context.user as User;
   } else if (context.member?.user) {
     user = context.member.user;
   } else if (context.message?.author) {
@@ -52,7 +52,7 @@ function createEventLocalizationObjects<TessenId extends string>(
   tessenId: TessenId,
   tessen: Tessen,
   guild: Guild | null,
-  interaction: any | null
+  interaction: Interaction | null
 ) {
   const defaultLocalization = tessen.locales.content.get('en') || {} as ContentValue;
   const guildLocale = guild?.preferredLocale?.split('-')[0] || 'en';
