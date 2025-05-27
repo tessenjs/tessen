@@ -1,3 +1,6 @@
+import { AutocompleteInteraction, ChannelType, InteractionContextType, PermissionFlags } from "discord.js";
+import { ChatInputInteractionWrapper } from "./Interactions";
+
 type StringToTuple<
   S extends string,
   R extends any[] = []
@@ -46,18 +49,128 @@ export type SlashCommandName<S extends string> =
         ? never
         : S
 
-export interface SlashCommand<N extends string = string> {
-  id: string;
-  name: N;
-  nameCombinations: string[];
+export type SlashCommandType = 'CHAT_INPUT' | 'USER' | 'MESSAGE';
+
+// Discord.js Application Command Option Types (excluding Subcommand and SubcommandGroup)
+export type SlashCommandOptionType = 
+  | 'String'
+  | 'Integer' 
+  | 'Number'
+  | 'Boolean'
+  | 'User'
+  | 'Channel'
+  | 'Role'
+  | 'Mentionable'
+  | 'Attachment';
+
+// Base option interface
+export interface BaseSlashCommandOption {
+  name: string;
   description: string;
-  handle: (ctx: any) => Promise<void>;
-  options?: SlashCommandOption[];
+  required?: boolean;
 }
 
-export type SlashCommandConfig<N extends string = string> = Omit<
-  SlashCommand<N>,
-  "nameCombinations"
->;
+// Option choice interface
+export interface SlashCommandOptionChoice<T = string | number> {
+  name: string;
+  value: T;
+}
 
-export type SlashCommandOption = {};
+// Autocomplete context for dynamic options
+export interface AutocompleteContext {
+  value: string;
+  focused: boolean;
+  interaction: AutocompleteInteraction; // The autocomplete interaction
+}
+
+// String option - strict union for choices vs autocomplete
+export type StringSlashCommandOption = BaseSlashCommandOption & {
+  type: 'String';
+  minLength?: number;
+  maxLength?: number;
+} & (
+  | { choices: SlashCommandOptionChoice<string>[]; autoComplete?: never; }
+  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<string>[]> | SlashCommandOptionChoice<string>[]; choices?: never; }
+  | { choices?: never; autoComplete?: never; }
+);
+
+// Integer option - strict union for choices vs autocomplete
+export type IntegerSlashCommandOption = BaseSlashCommandOption & {
+  type: 'Integer';
+  minValue?: number;
+  maxValue?: number;
+} & (
+  | { choices: SlashCommandOptionChoice<number>[]; autoComplete?: never; }
+  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<number>[]> | SlashCommandOptionChoice<number>[]; choices?: never; }
+  | { choices?: never; autoComplete?: never; }
+);
+
+// Number option - strict union for choices vs autocomplete
+export type NumberSlashCommandOption = BaseSlashCommandOption & {
+  type: 'Number';
+  minValue?: number;
+  maxValue?: number;
+} & (
+  | { choices: SlashCommandOptionChoice<number>[]; autoComplete?: never; }
+  | { autoComplete: (ctx: AutocompleteContext) => Promise<SlashCommandOptionChoice<number>[]> | SlashCommandOptionChoice<number>[]; choices?: never; }
+  | { choices?: never; autoComplete?: never; }
+);
+
+// Boolean option
+export interface BooleanSlashCommandOption extends BaseSlashCommandOption {
+  type: 'Boolean';
+}
+
+// User option
+export interface UserSlashCommandOption extends BaseSlashCommandOption {
+  type: 'User';
+}
+
+// Channel option
+export interface ChannelSlashCommandOption extends BaseSlashCommandOption {
+  type: 'Channel';
+  channelTypes?: (keyof typeof ChannelType)[];
+}
+
+// Role option
+export interface RoleSlashCommandOption extends BaseSlashCommandOption {
+  type: 'Role';
+}
+
+// Mentionable option
+export interface MentionableSlashCommandOption extends BaseSlashCommandOption {
+  type: 'Mentionable';
+}
+
+// Attachment option
+export interface AttachmentSlashCommandOption extends BaseSlashCommandOption {
+  type: 'Attachment';
+}
+
+// Union type for all option types (without Subcommand and SubcommandGroup)
+export type SlashCommandOption = 
+  | StringSlashCommandOption
+  | IntegerSlashCommandOption
+  | NumberSlashCommandOption
+  | BooleanSlashCommandOption
+  | UserSlashCommandOption
+  | ChannelSlashCommandOption
+  | RoleSlashCommandOption
+  | MentionableSlashCommandOption
+  | AttachmentSlashCommandOption;
+
+// Registration config type that includes all properties
+export interface SlashCommandRegistrationConfig<T extends string> {
+  id: string;
+  name: T;
+  description: string;
+  handle: (ctx: ChatInputInteractionWrapper) => void | Promise<void>;
+  options?: SlashCommandOption[];
+  defaultMemberPermissions?: (keyof PermissionFlags)[];
+  contexts?: InteractionContextType[];
+  nsfw?: boolean;
+}
+
+export interface SlashCommand<N extends string = string> extends SlashCommandRegistrationConfig<N> {
+  nameCombinations: string[];
+}

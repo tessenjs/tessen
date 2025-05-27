@@ -3,12 +3,23 @@ import { Collection } from "discord.js";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
-import { SlashCommandName, SlashCommandConfig } from "$types/SlashCommand";
-import { Interaction } from "$types/Interactions";
+import { SlashCommandName, SlashCommand, SlashCommandRegistrationConfig } from "$types/SlashCommand";
+import { 
+  Interaction, 
+  UserContextMenuRegistrationConfig,
+  MessageContextMenuRegistrationConfig,
+  ButtonRegistrationConfig,
+  SelectMenuRegistrationConfig,
+  ModalRegistrationConfig,
+  UserContextMenuCommand,
+  MessageContextMenuCommand
+} from "$types/Interactions";
 import { generateCombinations } from "$utils/pattern";
 import { CommandNameNoCombinationsError } from "./errors/CommandNameNoCombinationsError";
 import { CommandNameExceededMaxLengthError } from "./errors/CommandNameExceededMaxLengthError";
+import { Inspector } from "$lib/Inspector";
 import EventEmitter from "events";
+import { AnyEventRegistrationConfig, EventData } from "$types/Events";
 
 export interface PackConfig {
   id: string;
@@ -22,7 +33,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     locales: new Collection<string, any>(),
     subPacks: new Collection<string, Pack>(),
     interactions: new Collection<string, Interaction>(),
-    events: new Collection<string, any>(),
+    events: new Collection<string, EventData>(),
     inspectors: new Collection<string, any>(),
   }
 
@@ -47,6 +58,11 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
           disposeCallbacks.push(() => this.data.subPacks.delete(arg.id));
           break;
         }
+        case arg instanceof Inspector: {
+          this.data.inspectors.set(arg.id, arg);
+          disposeCallbacks.push(() => this.data.inspectors.delete(arg.id));
+          break;
+        }
       }
     }
 
@@ -56,7 +72,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     }
   }
 
-  slashCommand<T extends string>(cfg: SlashCommandConfig<T extends SlashCommandName<T> ? T : never>): DisposeCallback {
+  slashCommand<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -64,7 +80,95 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     
     this.isSlashCommandValid(cfg, nameCombinations);
 
-    this.data.interactions.set(cfg.name, { ...cfg, nameCombinations });
+    const slashCommand: SlashCommand = {
+      ...cfg,
+      nameCombinations
+    };
+
+    this.data.interactions.set(cfg.id, slashCommand);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  event(cfg: AnyEventRegistrationConfig): DisposeCallback {
+    const eventId = `${this.id}:${cfg.event}:${Date.now()}`;
+    
+    const eventData: EventData = {
+      event: cfg.event,
+      handle: cfg.handle
+    };
+    
+    this.data.events.set(eventId, eventData);
+
+    return () => this.data.events.delete(eventId);
+  }
+
+  userContextMenuCommand<T extends string>(cfg: UserContextMenuRegistrationConfig<T>): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with name ${cfg.id} already exists.`);
+
+    const contextMenuCommand: UserContextMenuCommand = {
+      ...cfg,
+      type: 'USER'
+    };
+
+    this.data.interactions.set(cfg.id, contextMenuCommand);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  messageContextMenuCommand<T extends string>(cfg: MessageContextMenuRegistrationConfig<T>): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with name ${cfg.id} already exists.`);
+
+    const contextMenuCommand: MessageContextMenuCommand = {
+      ...cfg,
+      type: 'MESSAGE'
+    };
+
+    this.data.interactions.set(cfg.id, contextMenuCommand);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  button(cfg: ButtonRegistrationConfig): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const buttonInteraction = {
+      ...cfg,
+      type: 'BUTTON' as const
+    };
+
+    this.data.interactions.set(cfg.id, buttonInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  selectMenu(cfg: SelectMenuRegistrationConfig): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const selectMenuInteraction = {
+      ...cfg,
+      type: 'SELECT_MENU' as const
+    };
+
+    this.data.interactions.set(cfg.id, selectMenuInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  modal(cfg: ModalRegistrationConfig): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const modalInteraction = {
+      ...cfg,
+      type: 'MODAL' as const
+    };
+
+    this.data.interactions.set(cfg.id, modalInteraction);
 
     return () => this.data.interactions.delete(cfg.id);
   }
@@ -73,7 +177,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
    * @throws {CommandNameNoCombinationsError} if the command has no name combinations.
    * @throws {CommandNameExceededMaxLengthError} if the command has a name combination with more than 3 words or a word with more than 32 characters.
    */
-  private isSlashCommandValid<T extends string>(cfg: SlashCommandConfig<T extends SlashCommandName<T> ? T : never>, nameCombinations: string[]) {
+  private isSlashCommandValid<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never>, nameCombinations: string[]) {
     if (nameCombinations.length === 0)
       throw new CommandNameNoCombinationsError({ message: `Interaction with id "${cfg.id}" has no name combinations.` });
   
@@ -86,6 +190,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
       });
     
   }
+  
   unload(...callbacks: DisposeCallback[]): void {
     this.unloaders.push(...callbacks);
   }

@@ -8,5 +8,16 @@ export interface ContentValue {
 
 export class Locale {
     content = new Collection<Language, ContentValue>();
-    interaction = new Collection<Language, any>();
+    interaction = new Collection<Language, { [k: string]: CommandInteractionLocale | ContextMenuLocale }>();
+}
+
+type CommandInteractionLocale = {
+    names: { [k: string]: string }; // There are multiple patterns for single command. Each of thems translation.
+    description: string; // Description of the command.
+    options: { [k: string]: string | { name: string, choices: { [k: string]: string } } }; // Options of the command.
+}
+
+type ContextMenuLocale = {
+    name: string; // Name of the user context menu command.
+    description: string; // Description of the user context menu command.
 }

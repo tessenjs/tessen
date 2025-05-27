@@ -1,16 +1,19 @@
 import { generateCombinations } from "$utils/pattern";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { ButtonHandlerOptions, ChatInputOptions, EmitOptions, InspectorOptions, ModalHandlerOptions, SelectMenuHandlerOptions } from "$types/InspectorOptions";
+import { ChatInputInteractionWrapper, ButtonInteractionWrapper, SelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper } from "$types/Interactions";
 
 export class Inspector {
     public readonly id: string;
     public readonly domain: "CurrentPack" | "AllSubPacks";
 
     private chatInputCombinationsMap: Map<string, string> = new Map();
-    private chatInputHandlers: Map<string, (ctx: any) => void | Promise<void>> = new Map();
-    private buttonHandlers: Map<string, ButtonHandlerOptions['handle']> = new Map();
-    private selectMenuHandlers: Map<string, SelectMenuHandlerOptions['handle']> = new Map();
-    private modalHandlers: Map<string, ModalHandlerOptions['handle']> = new Map();
+    private chatInputHandlers: Map<string, (ctx: ChatInputInteractionWrapper) => void | Promise<void>> = new Map();
+    private buttonHandlers: Map<string, (ctx: ButtonInteractionWrapper) => void | Promise<void>> = new Map();
+    private selectMenuHandlers: Map<string, (ctx: SelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private modalHandlers: Map<string, (ctx: ModalInteractionWrapper) => void | Promise<void>> = new Map();
+    private userContextMenuHandlers: Map<string, (ctx: UserContextMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private messageContextMenuHandlers: Map<string, (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void>> = new Map();
 
     constructor(options: InspectorOptions) {
         this.id = options.id;
@@ -50,6 +53,20 @@ export class Inspector {
                     const modalHandler = this.modalHandlers.get(id);
                     if (modalHandler) {
                         return await modalHandler(ctx);
+                    }
+                    break;
+
+                case 'userContextMenu':
+                    const userContextMenuHandler = this.userContextMenuHandlers.get(id);
+                    if (userContextMenuHandler) {
+                        return await userContextMenuHandler(ctx);
+                    }
+                    break;
+
+                case 'messageContextMenu':
+                    const messageContextMenuHandler = this.messageContextMenuHandlers.get(id);
+                    if (messageContextMenuHandler) {
+                        return await messageContextMenuHandler(ctx);
                     }
                     break;
                     
@@ -101,6 +118,22 @@ export class Inspector {
 
         return () => {
             this.modalHandlers.delete(options.id);
+        };
+    }
+
+    userContextMenu(options: { id: string; handle: (ctx: UserContextMenuInteractionWrapper) => void | Promise<void> }): DisposeCallback {
+        this.userContextMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.userContextMenuHandlers.delete(options.id);
+        };
+    }
+
+    messageContextMenu(options: { id: string; handle: (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void> }): DisposeCallback {
+        this.messageContextMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.messageContextMenuHandlers.delete(options.id);
         };
     }
 }

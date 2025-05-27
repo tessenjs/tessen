@@ -12,6 +12,11 @@ Module features:
 - **Inspectors**: Handle chat inputs and interactions with a simple API.
 - **Locales**: Manage localization files and interaction locales.
 
+# Methodolgies
+
+- Use object-based parameters for methods instead of string+function overloads.
+- For better performance, map every event and interaction to a single map, for handling to be faster.
+
 # Final Product Example
 ```ts
 // tessen is a discord.js based library for creating bots
@@ -47,7 +52,15 @@ pack.onUnload(
 
 const pattern = 'system (set|unset) settings';
 pack.event({
-
+  id: 'someId',
+  name: 'messageCreate',
+  handle: (ctx) => {
+    // Handler code
+    ctx.message;
+    ctx.message.reply({
+      content: ctx.locale.guild.blabla.blabla()
+    });
+  }
 })
 
 // Updated to use object-based parameter pattern only (no more string+function overload)
@@ -55,6 +68,8 @@ inspector.chatInput({
   pattern: 'system (set|unset) settings',
   handle: (ctx) => {
     // Handler code
+    // for interactions, ctx.locale.user is also available
+    // ctx.
   }
 });  // () => { } // unloader
 
@@ -66,8 +81,8 @@ inspector.emit({
 });
 
 inspector.button({
-  id: "",
-  handle() {
+  id: "", // we don't need name here, because we can use id for also custom id for discord.
+  handle(ctx) {
 
   }
 })
@@ -76,6 +91,8 @@ pack.use(inspector);  // () => { } // unloader
 pack.use(locales);  // () => { } // unloader
 
 tessen.use(pack);  // () => { } // unloader
+
+// example extension usage
 tessen.use(chatCommandExtension({
   prefix: "!"
 }))
@@ -83,12 +100,49 @@ tessen.slashCommand({
   id: 'example',
   name: 'example (command)?', // []
   description: 'an example command',
-  onExecute: (ctx) => {
+  handle: (ctx) => {
     ctx.interaction.reply({
       content: 'Hello world',
       ephemeral: true
     })
-  }
+  },
+  options: [
+    {
+      name: 'option1',
+      description: 'an example option',
+      type: 'String', // do not include subcommand and subcommand group options here, they are handled name pattern of the slash command
+      required: true
+    },
+    {
+      name: 'option2',
+      description: 'another example option',
+      type: 'Integer',
+      required: false,
+      choices: [
+        {
+          name: 'Choice 1',
+          value: 1
+        },
+        {
+          name: 'Choice 2',
+          value: 2
+        }
+      ]
+    },
+    {
+      name: 'option3',
+      description: 'a boolean option',
+      type: 'Boolean',
+      required: false,
+      autoComplete: async (ctx) => {
+        ctx.value; // The current value user is typing
+        return [
+          { name: 'Yes', value: true },
+          { name: 'No', value: false }
+        ];
+      }
+    }
+  ]
 }); // () => { } // unloader
 
 tessen.start();

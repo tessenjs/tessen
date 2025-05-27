@@ -1,12 +1,14 @@
 import { Pack } from "$lib/Pack";
 import { Client, ClientOptions, Collection } from "discord.js";
 import { defaultify } from "stuffs"
+import { handleEvent } from "$utils/handleEvent";
+import { TessenClientEventMap } from "$types/ClientEvents";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
 
-export interface TessenConfig {
-  id: string;
+export interface TessenConfig<ID extends string = string> {
+  id: ID;
   clients: TessenConfigClient[]
 }
 
@@ -15,7 +17,7 @@ export type CacheData<T> = {
   data: T;
 }
 
-export class Tessen extends Pack<TessenConfig> {
+export class Tessen<ID extends string = string> extends Pack<TessenConfig> {
 
   cache = {
     locales: new Collection<string, CacheData<any>>(),
@@ -32,7 +34,7 @@ export class Tessen extends Pack<TessenConfig> {
 
   clients = new Collection<string, TessenClient>();
 
-  constructor(config: TessenConfig) {
+  constructor(config: TessenConfig<ID>) {
     super(config);
   }
 
@@ -84,13 +86,20 @@ export class Tessen extends Pack<TessenConfig> {
       const originalEmit = tessenClient.client.emit.bind(tessenClient.client);
 
       tessenClient.client.emit = (event: string, ...args: any[]) => {
+        // Handle known Discord.js events through our system
+        if (event in TessenClientEventMap) {
+          handleEvent(this, tessenClient, event as keyof typeof TessenClientEventMap, args);
+        }
+        
+        // Emit generic Tessen events
         this.events.emit("tessen:clientEvent", { client: tessenClient, event, args });
         this.events.emit(`${tessenClient.id}:${event}`, { client: tessenClient, event, args });
+        
         return originalEmit(event, ...args);
       };
 
       // @ts-ignore
-      tessenClient.client._emit = originalEmit.bind(client);
+      tessenClient.client._emit = originalEmit;
 
       await tessenClient.client.login(tessenClient.token);
 

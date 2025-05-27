@@ -19,7 +19,7 @@ export type ModalHandlerOptions = {
 };
 
 export type EmitOptions = {
-    type: 'chatInput' | 'button' | 'selectMenu' | 'modal';
+    type: 'chatInput' | 'button' | 'selectMenu' | 'modal' | 'userContextMenu' | 'messageContextMenu';
     id: string;
     ctx: any;
 };
