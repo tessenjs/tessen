@@ -30,7 +30,7 @@ const tessen = new Tessen();
 
 const pack = new Pack({ id: 'ExamplePack' });
 const inspector = new Inspector({ id: 'ExampleInspector', domain: "CurrentPack|AllSubPacks" });
-const locales = new Locales({ id: 'ExampleLocales', domain: "CurrentPack|AllSubPacks" });
+const locales = new Locale({ id: 'ExampleLocales' });
 
 pack.onUnload(
   locales.loadFile({

@@ -64,6 +64,11 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
           disposeCallbacks.push(() => this.data.inspectors.delete(arg.id));
           break;
         }
+        case arg instanceof Locale: {
+          this.data.locales.set(arg.id, arg);
+          disposeCallbacks.push(() => this.data.locales.delete(arg.id));
+          break;
+        }
       }
     }
 
