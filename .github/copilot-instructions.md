@@ -17,7 +17,7 @@ Module features:
 - Use object-based parameters for methods instead of string+function overloads.
 - For better performance, map every event and interaction to a single map, for handling to be faster.
 - Use PascalCase for constants.
-- Don't use enums, use string arrays generaly. If a discord.js enum is provided, use it with keyof typeof.
+- Don't use enums, use string arrays generaly. If a discord.js enum is provided, convert it to string array if necessery.
 
 
 # Final Product Example

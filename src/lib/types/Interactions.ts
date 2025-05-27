@@ -75,65 +75,65 @@ export interface AutocompleteInteractionWrapper<TessenId extends string = string
 }
 
 // Registration configs
-export interface UserContextMenuRegistrationConfig<T extends string> {
+export interface UserContextMenuRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
-  handle: (ctx: UserContextMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface MessageContextMenuRegistrationConfig<T extends string> {
+export interface MessageContextMenuRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
-  handle: (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface ButtonRegistrationConfig {
+export interface ButtonRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: ButtonInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface SelectMenuRegistrationConfig {
+export interface SelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: SelectMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: SelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface ModalRegistrationConfig {
+export interface ModalRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: ModalInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
 // Existing interaction data interfaces
-export interface ButtonInteractionData {
+export interface ButtonInteractionData<TessenId extends string = string> {
   id: string;
   type: 'Button';
-  handle: (ctx: ButtonInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface SelectMenuInteractionData {
+export interface SelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'SelectMenu';
-  handle: (ctx: SelectMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: SelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface ModalInteractionData {
+export interface ModalInteractionData<TessenId extends string = string> {
   id: string;
   type: 'Modal';
-  handle: (ctx: ModalInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
 // Context menu command interfaces
-export interface UserContextMenuCommand {
+export interface UserContextMenuCommand<TessenId extends string = string> {
   id: string;
   name: string;
   type: 'User';
-  handle: (ctx: UserContextMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
-export interface MessageContextMenuCommand {
+export interface MessageContextMenuCommand<TessenId extends string = string> {
   id: string;
   name: string;
   type: 'Message';
-  handle: (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
 }
 
 export type MessageInteraction = ChatInputInteractionWrapper;

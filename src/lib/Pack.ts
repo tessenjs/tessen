@@ -26,7 +26,7 @@ export interface PackConfig {
   id: string;
 }
 
-export class Pack<Config extends PackConfig = PackConfig> implements Identifiable {
+export class Pack<Config extends PackConfig = PackConfig, TessenId extends string = string> implements Identifiable {
 
   private unloaders: DisposeCallback[] = [];
 
@@ -73,7 +73,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     }
   }
 
-  slashCommand<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never>): DisposeCallback {
+  slashCommand<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never, TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -105,7 +105,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     return () => this.data.events.delete(eventId);
   }
 
-  userContextMenuCommand<T extends string>(cfg: UserContextMenuRegistrationConfig<T>): DisposeCallback {
+  userContextMenuCommand<T extends string>(cfg: UserContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -119,7 +119,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  messageContextMenuCommand<T extends string>(cfg: MessageContextMenuRegistrationConfig<T>): DisposeCallback {
+  messageContextMenuCommand<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -133,7 +133,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  button(cfg: ButtonRegistrationConfig): DisposeCallback {
+  button(cfg: ButtonRegistrationConfig<TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
@@ -147,7 +147,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  selectMenu(cfg: SelectMenuRegistrationConfig): DisposeCallback {
+  selectMenu(cfg: SelectMenuRegistrationConfig<TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
@@ -161,7 +161,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  modal(cfg: ModalRegistrationConfig): DisposeCallback {
+  modal(cfg: ModalRegistrationConfig<TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
@@ -179,7 +179,7 @@ export class Pack<Config extends PackConfig = PackConfig> implements Identifiabl
    * @throws {CommandNameNoCombinationsError} if the command has no name combinations.
    * @throws {CommandNameExceededMaxLengthError} if the command has a name combination with more than 3 words or a word with more than 32 characters.
    */
-  private isSlashCommandValid<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never>, nameCombinations: string[]) {
+  private isSlashCommandValid<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never, TessenId>, nameCombinations: string[]) {
     if (nameCombinations.length === 0)
       throw new CommandNameNoCombinationsError({ message: `Interaction with id "${cfg.id}" has no name combinations.` });
   

@@ -21,7 +21,7 @@ export type CacheData<T> = {
   data: T;
 }
 
-export class Tessen<ID extends string = string> extends Pack<TessenConfig> {
+export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
   cache = {
     locales: new Collection<string, CacheData<Locale>>(),

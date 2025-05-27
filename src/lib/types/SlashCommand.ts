@@ -153,11 +153,11 @@ export type SlashCommandOption =
 export type SlashCommandOptions = Record<string, SlashCommandOption>;
 
 // Registration config type that includes all properties
-export interface SlashCommandRegistrationConfig<T extends string> {
+export interface SlashCommandRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
   description: string;
-  handle: (ctx: ChatInputInteractionWrapper) => void | Promise<void>;
+  handle: (ctx: ChatInputInteractionWrapper<TessenId>) => void | Promise<void>;
   options?: SlashCommandOptions;
   defaultMemberPermissions?: (keyof PermissionFlags)[];
   contexts?: (keyof typeof InteractionContextType)[];
@@ -165,7 +165,7 @@ export interface SlashCommandRegistrationConfig<T extends string> {
   type?: 'ChatInput';
 }
 
-export interface SlashCommand<N extends string = string> extends SlashCommandRegistrationConfig<N> {
+export interface SlashCommand<N extends string = string, TessenId extends string = string> extends SlashCommandRegistrationConfig<N, TessenId> {
   type: 'ChatInput';
   nameCombinations: string[];
 }
