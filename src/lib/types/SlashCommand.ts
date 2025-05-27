@@ -163,6 +163,7 @@ export interface SlashCommandRegistrationConfig<T extends string, TessenId exten
   contexts?: (keyof typeof InteractionContextType)[];
   nsfw?: boolean;
   type?: 'ChatInput';
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface SlashCommand<N extends string = string, TessenId extends string = string> extends SlashCommandRegistrationConfig<N, TessenId> {

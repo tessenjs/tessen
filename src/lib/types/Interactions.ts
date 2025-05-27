@@ -79,27 +79,32 @@ export interface UserContextMenuRegistrationConfig<T extends string, TessenId ex
   id: string;
   name: T;
   handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface MessageContextMenuRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
   handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface ButtonRegistrationConfig<TessenId extends string = string> {
   id: string;
   handle: (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface SelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
   handle: (ctx: SelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface ModalRegistrationConfig<TessenId extends string = string> {
   id: string;
   handle: (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 // Existing interaction data interfaces
@@ -127,6 +132,7 @@ export interface UserContextMenuCommand<TessenId extends string = string> {
   name: string;
   type: 'User';
   handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string;
 }
 
 export interface MessageContextMenuCommand<TessenId extends string = string> {
@@ -134,6 +140,7 @@ export interface MessageContextMenuCommand<TessenId extends string = string> {
   name: string;
   type: 'Message';
   handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  clientId?: string;
 }
 
 export type MessageInteraction = ChatInputInteractionWrapper;

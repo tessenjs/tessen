@@ -100,8 +100,8 @@ tessen.use(chatCommandExtension({
   prefix: "!"
 }))
 tessen.slashCommand({
-  id: 'example',
-  name: 'example (command)?', // []
+  id: 'example', // id is not related to discord, it is just an identifier for the command for tessen to use
+  name: 'example (command|kommand)?', // this will generate multiple command name combinations, like 'example', 'example command', 'example kommand', etc., same command will be publish to all combination names
   description: 'an example command',
   handle: (ctx) => {
     ctx.interaction.reply({
@@ -110,7 +110,7 @@ tessen.slashCommand({
     })
   },
   options: {
-    option1: {
+    option1: { // here key is for option name, and value is the option object
       description: 'an example option',
       type: 'String', // do not include subcommand and subcommand group options here, they are handled name pattern of the slash command
       required: true
@@ -120,7 +120,7 @@ tessen.slashCommand({
       type: 'Integer',
       required: false,
       choices: {
-        1: 'Choice 1',
+        1: 'Choice 1', // key is the value, value is the name, this is also viable for localization
         2: 'Choice 2',
         3: 'Choice 3'
       }

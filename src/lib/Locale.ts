@@ -62,7 +62,7 @@ function convertToContentValue<T extends PlainLocaleData>(data: T): TransformToC
 
 export class Locale implements Identifiable {
     content = new Collection<Language, ContentValue>();
-    interaction = new Collection<Language, { [k: string]: CommandInteractionLocale | ContextMenuLocale }>();
+    interaction = new Collection<Language, Record<string, InteractionLocaleData>>();
     private unloaders: DisposeCallback[] = [];
     
     constructor(public config: LocaleConfig) {}
@@ -105,13 +105,14 @@ export class Locale implements Identifiable {
         data: CommandInteractionLocale | ContextMenuLocale;
     }): DisposeCallback {
         const currentData = this.interaction.get(cfg.locale) || {};
-        currentData[cfg.name] = cfg.data;
+        // Use the id as the key instead of name for proper lookup
+        currentData[cfg.id] = cfg.data;
         this.interaction.set(cfg.locale, currentData);
         
         return () => {
             const data = this.interaction.get(cfg.locale);
             if (data) {
-                delete data[cfg.name];
+                delete data[cfg.id];
                 if (Object.keys(data).length === 0) {
                     this.interaction.delete(cfg.locale);
                 } else {
@@ -133,16 +134,26 @@ export class Locale implements Identifiable {
     }
 }
 
-type CommandInteractionLocale = {
-    names: { [k: string]: string }; // There are multiple patterns for single command. Each of thems translation.
-    description: string; // Description of the command.
-    options: { [k: string]: string | { name: string, choices: { [k: string]: string } } }; // Options of the command.
+export type CommandInteractionLocale = {
+    names?: { [k: string]: string }; // Multiple patterns for single command translations
+    name?: string; // Single name for simple commands
+    description?: string; // Description of the command
+    options?: { [optionName: string]: CommandInteractionLocaleOption }; // Key is the option name (from Tessen's options object keys)
 }
 
-type ContextMenuLocale = {
-    name: string; // Name of the user context menu command.
-    description: string; // Description of the user context menu command.
+export type CommandInteractionLocaleOption = {
+    name?: string; // Localized name for the option
+    description?: string; // Localized description for the option
+    // Keys are the choice values (keys from Tessen's choices object), values are the localized display names
+    choices?: { [choiceKey: string]: string };
 }
+
+export type ContextMenuLocale = {
+    name: string; // Name of the context menu command
+    description?: string; // Description of the context menu command
+}
+
+export type InteractionLocaleData = CommandInteractionLocale | ContextMenuLocale;
 
 export type GetLocalization<TessenId extends string> = TessenId extends keyof TessenLocalizationMap 
   ? TessenLocalizationMap[TessenId] 

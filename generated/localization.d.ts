@@ -1,4 +1,4 @@
-import { ContentValue } from "$lib/Locale";
+import { ContentValue } from "../src/lib/Locale";
 
 // Base interface that can be extended by specific Tessen instances
 export interface GeneratedLocalization {
@@ -7,6 +7,3 @@ export interface GeneratedLocalization {
 
 // This will be overridden by actual generated files with specific Tessen instance localizations
 export interface TessenLocalizationMap extends GeneratedLocalization {}
-
-// Helper type for getting localization by Tessen ID
-

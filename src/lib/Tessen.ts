@@ -6,7 +6,8 @@ import { TessenClientEventMap } from "$types/ClientEvents";
 import { Interaction } from "$types/Interactions";
 import { EventData } from "$types/Events";
 import { Inspector } from "$lib/Inspector";
-import { ContentValue, Locale } from "$lib/Locale";
+import { ContentValue, Locale, InteractionLocaleData } from "$lib/Locale";
+import { publishInteractions } from "$utils/publishInteractions";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
@@ -33,7 +34,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
   locales = {
     content: new Collection<string, ContentValue>(),
-    interaction: new Collection<string, Record<string, unknown>>(),
+    interaction: new Collection<string, Record<string, InteractionLocaleData>>(),
   }
 
   clients = new Collection<string, TessenClient>();
@@ -72,7 +73,10 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
       for (const [language, interactionValue] of locale.interaction) {
         let currentInteractionLocale = (this.locales.interaction.get(language) ?? {});
-        currentInteractionLocale = defaultify(interactionValue, currentInteractionLocale, true);
+        // Properly merge interaction locales by interaction ID
+        for (const [interactionId, localeData] of Object.entries(interactionValue)) {
+          currentInteractionLocale[interactionId] = localeData;
+        }
         this.locales.interaction.set(language, currentInteractionLocale);
       }
     }
@@ -117,6 +121,11 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
     }
 
     this.events.emit("tessen:clientsReady", { clients: this.clients });
+  }
+
+  async publish() {
+    this.refresh();
+    await publishInteractions(this);
   }
 
   override destroy(): void {
