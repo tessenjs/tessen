@@ -9,6 +9,4 @@ export interface GeneratedLocalization {
 export interface TessenLocalizationMap extends GeneratedLocalization {}
 
 // Helper type for getting localization by Tessen ID
-export type GetLocalization<TessenId extends string> = TessenId extends keyof TessenLocalizationMap 
-  ? TessenLocalizationMap[TessenId] 
-  : ContentValue;
+

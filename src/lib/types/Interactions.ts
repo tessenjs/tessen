@@ -1,6 +1,5 @@
 import { SlashCommand } from "./SlashCommand";
-import { ContentValue } from "$lib/Locale";
-import { GetLocalization } from "../../../generated/localization";
+import { GetLocalization } from "$lib/Locale";
 import { 
   ChatInputCommandInteraction, 
   ButtonInteraction, 

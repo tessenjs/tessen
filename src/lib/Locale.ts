@@ -1,4 +1,5 @@
 import { Collection } from "discord.js";
+import { TessenLocalizationMap } from "../../generated/localization";
 
 export type Language = "tr" | "en" | "...";
 
@@ -21,3 +22,7 @@ type ContextMenuLocale = {
     name: string; // Name of the user context menu command.
     description: string; // Description of the user context menu command.
 }
+
+export type GetLocalization<TessenId extends string> = TessenId extends keyof TessenLocalizationMap 
+  ? TessenLocalizationMap[TessenId] 
+  : ContentValue;

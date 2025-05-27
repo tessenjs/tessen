@@ -1,5 +1,5 @@
+import { GetLocalization } from "$lib/Locale";
 import { TessenClientEvents } from "./ClientEvents";
-import { GetLocalization } from "../../../generated/localization";
 import { Guild, User } from "discord.js";
 
 // Localization helper type for events
