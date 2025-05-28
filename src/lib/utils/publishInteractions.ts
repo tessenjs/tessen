@@ -517,8 +517,8 @@ export async function publishInteractions(tessen: Tessen) {
   const defaultClientId = firstClient?.id;
   
   if (!defaultClientId) {
-    tessen.events.emit('tessen:publishError', {
-      client: null,
+    tessen.events.emit('tessen:interactionsPublishError', {
+      clientId: 'unknown',
       error: new Error('No clients available for publishing interactions')
     });
     return;
@@ -534,12 +534,9 @@ export async function publishInteractions(tessen: Tessen) {
       // Determine target client
       const targetClientId = slashCommand.clientId || defaultClientId;
       if (!clientInteractions.has(targetClientId)) {
-        tessen.events.emit('tessen:publishWarning', {
-          message: `Client '${targetClientId}' not found for interaction '${slashCommand.id}', using default client '${defaultClientId}'`,
-          interactionId: slashCommand.id,
-          requestedClientId: targetClientId,
-          fallbackClientId: defaultClientId
-        });
+        // Note: This event type doesn't exist in PackEventMap, so we'll emit a generic event
+        // tessen.events.emit('tessen:publishWarning', { ... });
+        console.warn(`Client '${targetClientId}' not found for interaction '${slashCommand.id}', using default client '${defaultClientId}'`);
         clientInteractions.set(defaultClientId, clientInteractions.get(defaultClientId) || []);
       }
       
@@ -852,8 +849,8 @@ export async function publishInteractions(tessen: Tessen) {
   for (const tessenClient of tessen.clients.values()) {
     try {
       if (!tessenClient.client.user) {
-        tessen.events.emit('tessen:publishError', {
-          client: tessenClient,
+        tessen.events.emit('tessen:interactionsPublishError', {
+          clientId: tessenClient.id,
           error: new Error('Client not ready - user is null')
         });
         continue;

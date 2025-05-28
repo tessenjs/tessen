@@ -32,8 +32,8 @@ export type CacheData<T> = {
 
 export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
-  // Use the same unified event system as Pack
-  events = new ResultEventEmitter<PackEventMap>();
+  // Note: We inherit the propagating event system from Pack
+  // No need to override events property as Pack already handles propagation
 
   cache = {
     locales: new Collection<string, CacheData<Locale>>(),
@@ -124,9 +124,9 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
           handleEvent(this, tessenClient, event as keyof typeof TessenClientEventMap, args);
         }
         
-        // Emit generic Tessen events with proper typing - propagates to all subpacks
-        this.emitEvent("tessen:clientEvent", { client: tessenClient, event, args });
-        this.emitEvent(`${tessenClient.id}:${event}` as const, { client: tessenClient, event, args });
+        // Emit generic Tessen events with proper typing - NOW PROPAGATES to all subpacks automatically
+        this.events.emit("tessen:clientEvent", { client: tessenClient, event, args });
+        this.events.emit(`${tessenClient.id}:${event}` as const, { client: tessenClient, event, args });
         
         return originalEmit(event, ...args);
       };
@@ -136,10 +136,12 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
       await tessenClient.client.login(tessenClient.token);
 
-      this.emitEvent("tessen:clientReady", { client: tessenClient });
+      // NOW PROPAGATES to all subpacks automatically
+      this.events.emit("tessen:clientReady", { client: tessenClient });
     }
 
-    this.emitEvent("tessen:clientsReady", { clients: this.clients });
+    // NOW PROPAGATES to all subpacks automatically
+    this.events.emit("tessen:clientsReady", { clients: this.clients });
   }
 
   async publish() {
@@ -147,17 +149,17 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
     try {
       await publishInteractions(this);
       
-      // Emit success events for each client - propagates to all subpacks
+      // Emit success events for each client - NOW PROPAGATES to all subpacks automatically
       for (const client of this.clients.values()) {
-        this.emitEvent('tessen:interactionsPublished', { 
+        this.events.emit('tessen:interactionsPublished', { 
           clientId: client.id, 
           count: this.cache.interactions.size 
         });
       }
     } catch (error) {
-      // Emit error events for each client - propagates to all subpacks
+      // Emit error events for each client - NOW PROPAGATES to all subpacks automatically
       for (const client of this.clients.values()) {
-        this.emitEvent('tessen:interactionsPublishError', { 
+        this.events.emit('tessen:interactionsPublishError', { 
           clientId: client.id, 
           error: error as Error 
         });
@@ -370,7 +372,8 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
     this.clients.forEach((client) => {
       client.client.destroy();
-      this.emitEvent("tessen:clientDestroy", { client });
+      // NOW PROPAGATES to all subpacks automatically
+      this.events.emit("tessen:clientDestroy", { client });
     });
   }
 }

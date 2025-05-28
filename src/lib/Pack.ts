@@ -47,7 +47,31 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     inspectors: new Collection<string, Inspector>(),
   }
 
-  events = new ResultEventEmitter<PackEventMap>();
+  private _events = new ResultEventEmitter<PackEventMap>();
+
+  // Create a proper events object that extends ResultEventEmitter with propagation
+  events = (() => {
+    const propagatingEmitter = Object.create(this._events);
+    
+    // Override emit methods to use propagation
+    propagatingEmitter.emit = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown[] => {
+      return this.emitEvent(event, ...args);
+    };
+
+    propagatingEmitter.emitAsync = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): AsyncIterableIterator<unknown> => {
+      return this.emitEventAsync(event, ...args);
+    };
+
+    propagatingEmitter.emitUntilResultAsync = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown> => {
+      return this.emitEventUntilResultAsync(event, ...args);
+    };
+
+    propagatingEmitter.emitUntilResult = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown => {
+      return this.emitEventUntilResultSync(event, ...args);
+    };
+
+    return propagatingEmitter as ResultEventEmitter<PackEventMap>;
+  })();
 
   get id() {
     return this.config.id;
@@ -61,7 +85,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   // Override emit to propagate events to all subpacks
   private emitToSubPacks<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): void {
     // Emit to this pack
-    this.events.emit(event, ...args);
+    this._events.emit(event, ...args);
     
     // Recursively emit to all subpacks
     this.data.subPacks.forEach((subPack) => {
@@ -72,7 +96,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   // Enhanced emit that can collect results from subpacks with async iterator
   private async* emitToSubPacksWithAsyncIterator<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): AsyncIterableIterator<unknown> {
     // Emit to this pack and yield results
-    for await (const result of this.events.emitAsync(event, ...args)) {
+    for await (const result of this._events.emitAsync(event, ...args)) {
       yield result;
     }
     
@@ -101,7 +125,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     const allResults: unknown[] = [];
     
     // Collect results from this pack
-    const thisResults = this.events.emit(event, ...args);
+    const thisResults = this._events.emit(event, ...args);
     allResults.push(...thisResults);
     
     // Recursively collect results from all subpacks
@@ -128,7 +152,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   // Emit until first truthy result (async-aware)
   async emitEventUntilResultAsync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown> {
     // Try this pack first
-    const thisResult = await this.events.emitUntilResultAsync(event, ...args);
+    const thisResult = await this._events.emitUntilResultAsync(event, ...args);
     if (thisResult !== undefined) {
       return thisResult;
     }
@@ -147,7 +171,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   // Emit until first truthy result (sync only, faster)
   emitEventUntilResultSync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown {
     // Try this pack first
-    const thisResult = this.events.emitUntilResult(event, ...args);
+    const thisResult = this._events.emitUntilResult(event, ...args);
     if (thisResult !== undefined) {
       return thisResult;
     }
@@ -446,7 +470,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     this.data.subPacks.clear();
 
     this.emitEvent('pack:destroyed', { packId: this.id });
-    this.events.removeAllListeners();
+    this._events.removeAllListeners();
   }
 
 }
