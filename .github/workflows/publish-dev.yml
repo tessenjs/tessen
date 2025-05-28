@@ -4,18 +4,27 @@ on:
   push:
     branches: [ai/base]
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v3
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
       - run: npm run build
-      - run: npm version prerelease --preid=dev --no-git-tag-version
+      - run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      - run: npm version prerelease --preid=dev
+      - run: git push --follow-tags
       - run: npm publish --tag dev
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
