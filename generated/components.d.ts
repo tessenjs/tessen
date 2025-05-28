@@ -8,5 +8,6 @@ export interface ComponentRegistrationData {
   };
 }
 
+
 // This will be overridden by actual generated files with specific component registrations
 export interface TessenComponentMap extends ComponentRegistrationData {}

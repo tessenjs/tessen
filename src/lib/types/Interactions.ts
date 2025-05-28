@@ -1,5 +1,6 @@
 import { SlashCommand } from "./SlashCommand";
 import { GetLocalization } from "$lib/Locale";
+import { CustomDataValue } from "./ComponentBuilder";
 import { 
   ChatInputCommandInteraction, 
   ButtonInteraction, 
@@ -34,49 +35,49 @@ export interface ButtonInteractionWrapper<TessenId extends string = string> exte
   type: 'button';
   interaction: ButtonInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface StringSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'stringSelectMenu';
   interaction: StringSelectMenuInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface UserSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'userSelectMenu';
   interaction: UserSelectMenuInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface RoleSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'roleSelectMenu';
   interaction: RoleSelectMenuInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface ChannelSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'channelSelectMenu';
   interaction: ChannelSelectMenuInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface MentionableSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'mentionableSelectMenu';
   interaction: MentionableSelectMenuInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface ModalInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
   type: 'modal';
   interaction: ModalSubmitInteraction;
   customId: string;
-  data: (string | number)[];
+  data: CustomDataValue[];
 }
 
 export interface UserContextMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
