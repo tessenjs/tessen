@@ -26,7 +26,7 @@ Module features:
 ```ts
 // tessen is a discord.js based library for creating bots
 // tessen syntax is similar to express.js
-import { Tessen, Pack, Inspector, Locales } from 'tessen';
+import { Tessen, Pack, Inspector, Locale } from 'tessen';
 // tessen pack'in extendidir
 const tessen = new Tessen();
 

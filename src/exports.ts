@@ -1,1 +1,1 @@
-export { ButtonStyle, TextInputStyle, GatewayIntentBits, Collection, MessageFlags } from "discord.js";
+export * as Discord from "discord.js";

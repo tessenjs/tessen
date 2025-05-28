@@ -12,10 +12,7 @@ import {
   UserContextMenuCommandInteraction,
   MessageContextMenuCommandInteraction,
   Message,
-  Guild,
-  User,
   AutocompleteInteraction,
-  ApplicationCommandOptionType
 } from "discord.js";
 
 // Localization helper type with direct locale access
@@ -105,97 +102,108 @@ export interface AutocompleteInteractionWrapper<TessenId extends string = string
   };
 }
 
+// Handle types
+export type UserContextMenuHandle<TessenId extends string = string> = (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type MessageContextMenuHandle<TessenId extends string = string> = (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type ButtonHandle<TessenId extends string = string> = (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
+export type StringSelectMenuHandle<TessenId extends string = string> = (ctx: StringSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type UserSelectMenuHandle<TessenId extends string = string> = (ctx: UserSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type RoleSelectMenuHandle<TessenId extends string = string> = (ctx: RoleSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type ChannelSelectMenuHandle<TessenId extends string = string> = (ctx: ChannelSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type MentionableSelectMenuHandle<TessenId extends string = string> = (ctx: MentionableSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+export type ModalHandle<TessenId extends string = string> = (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
+
 // Registration configs
 export interface UserContextMenuRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
-  handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: UserContextMenuHandle<TessenId>;
   clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface MessageContextMenuRegistrationConfig<T extends string, TessenId extends string = string> {
   id: string;
   name: T;
-  handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: MessageContextMenuHandle<TessenId>;
   clientId?: string; // Target specific client, defaults to first client if not specified
 }
 
 export interface ButtonRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ButtonHandle<TessenId>;
 }
 
 export interface StringSelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: StringSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: StringSelectMenuHandle<TessenId>;
 }
 
 export interface UserSelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: UserSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: UserSelectMenuHandle<TessenId>;
 }
 
 export interface RoleSelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: RoleSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: RoleSelectMenuHandle<TessenId>;
 }
 
 export interface ChannelSelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: ChannelSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ChannelSelectMenuHandle<TessenId>;
 }
 
 export interface MentionableSelectMenuRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: MentionableSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: MentionableSelectMenuHandle<TessenId>;
 }
 
 export interface ModalRegistrationConfig<TessenId extends string = string> {
   id: string;
-  handle: (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ModalHandle<TessenId>;
 }
 
 // Existing interaction data interfaces
 export interface ButtonInteractionData<TessenId extends string = string> {
   id: string;
   type: 'Button';
-  handle: (ctx: ButtonInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ButtonHandle<TessenId>;
 }
 
 export interface StringSelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'StringSelectMenu';
-  handle: (ctx: StringSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: StringSelectMenuHandle<TessenId>;
 }
 
 export interface UserSelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'UserSelectMenu';
-  handle: (ctx: UserSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: UserSelectMenuHandle<TessenId>;
 }
 
 export interface RoleSelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'RoleSelectMenu';
-  handle: (ctx: RoleSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: RoleSelectMenuHandle<TessenId>;
 }
 
 export interface ChannelSelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'ChannelSelectMenu';
-  handle: (ctx: ChannelSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ChannelSelectMenuHandle<TessenId>;
 }
 
 export interface MentionableSelectMenuInteractionData<TessenId extends string = string> {
   id: string;
   type: 'MentionableSelectMenu';
-  handle: (ctx: MentionableSelectMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: MentionableSelectMenuHandle<TessenId>;
 }
 
 export interface ModalInteractionData<TessenId extends string = string> {
   id: string;
   type: 'Modal';
-  handle: (ctx: ModalInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: ModalHandle<TessenId>;
 }
 
 // Context menu command interfaces
@@ -203,7 +211,7 @@ export interface UserContextMenuCommand<TessenId extends string = string> {
   id: string;
   name: string;
   type: 'User';
-  handle: (ctx: UserContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: UserContextMenuHandle<TessenId>;
   clientId?: string;
 }
 
@@ -211,7 +219,7 @@ export interface MessageContextMenuCommand<TessenId extends string = string> {
   id: string;
   name: string;
   type: 'Message';
-  handle: (ctx: MessageContextMenuInteractionWrapper<TessenId>) => void | Promise<void>;
+  handle: MessageContextMenuHandle<TessenId>;
   clientId?: string;
 }
 
