@@ -227,6 +227,55 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     };
   }
 
+  event(cfg: AnyEventRegistrationConfig): DisposeCallback {
+    const eventId = `${this.id}:${cfg.event}:${Date.now()}`;
+    
+    const eventData: EventData = {
+      event: cfg.event,
+      handle: cfg.handle
+    };
+    
+    this.data.events.set(eventId, eventData);
+
+    return () => this.data.events.delete(eventId);
+  }
+
+  userContextMenu<T extends string>(cfg: UserContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with name ${cfg.id} already exists.`);
+
+    const contextMenuCommand: UserContextMenuCommand = {
+      ...cfg,
+      type: 'User'
+    };
+
+    this.data.interactions.set(cfg.id, contextMenuCommand);
+    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'User' });
+
+    return () => {
+      this.data.interactions.delete(cfg.id);
+      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'User' });
+    };
+  }
+
+  messageContextMenu<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with name ${cfg.id} already exists.`);
+
+    const contextMenuCommand: MessageContextMenuCommand = {
+      ...cfg,
+      type: 'Message'
+    };
+
+    this.data.interactions.set(cfg.id, contextMenuCommand);
+    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'Message' });
+
+    return () => {
+      this.data.interactions.delete(cfg.id);
+      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'Message' });
+    };
+  }
+
   button(cfg: ButtonRegistrationConfig<TessenId> & { options?: ButtonComponentOptions }): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
@@ -351,6 +400,17 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
       this.data.interactions.delete(cfg.id);
       this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'Modal' });
     };
+  }
+
+  // Helper method for parsing custom data with event support (sync version)
+  parseCustomData(customId: string): { id: string; data: CustomDataValue[] } {
+    return parseCustomDataSync(customId, this.events);
+  }
+
+  // Helper method for parsing custom data with sequential async processing
+  async parseCustomDataAsync(customId: string): Promise<{ id: string; data: CustomDataValue[] }> {
+    const { parseCustomData } = await import("$types/ComponentBuilder");
+    return parseCustomData(customId, this.events);
   }
 
   /**

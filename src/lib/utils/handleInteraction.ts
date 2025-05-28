@@ -308,7 +308,7 @@ async function handleButtonInteraction(
   client: TessenClient,
   interaction: ButtonInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -352,7 +352,7 @@ async function handleStringSelectMenuInteraction(
   client: TessenClient,
   interaction: StringSelectMenuInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -396,7 +396,7 @@ async function handleUserSelectMenuInteraction(
   client: TessenClient,
   interaction: UserSelectMenuInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -440,7 +440,7 @@ async function handleRoleSelectMenuInteraction(
   client: TessenClient,
   interaction: RoleSelectMenuInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -484,7 +484,7 @@ async function handleChannelSelectMenuInteraction(
   client: TessenClient,
   interaction: ChannelSelectMenuInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -528,7 +528,7 @@ async function handleMentionableSelectMenuInteraction(
   client: TessenClient,
   interaction: MentionableSelectMenuInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
@@ -572,7 +572,7 @@ async function handleModalSubmitInteraction(
   client: TessenClient,
   interaction: ModalInteractionWrapper['interaction']
 ) {
-  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,

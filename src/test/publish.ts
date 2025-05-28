@@ -213,16 +213,15 @@ const interactionCreateUnloader = commandPack.event({
 
 // Set up Tessen event handlers
 tessen.events.on('tessen:interactionsPublished', (data) => {
-  console.log(`✅ Published ${data.commands} commands to client ${data.client.id}`);
-  console.log(`📍 Localized commands: ${data.localizedCommands}`);
+  console.log(`✅ Published ${data.count} commands to client ${data.clientId}`);
 });
 
-tessen.events.on('tessen:publishError', (data) => {
-  console.error(`❌ Failed to publish interactions for client ${data.client?.id}:`, data.error);
+tessen.events.on('tessen:interactionsPublishError', (data) => {
+  console.error(`❌ Failed to publish interactions for client ${data.clientId}:`, data.error);
 });
 
 tessen.events.on('tessen:publishWarning', (data) => {
-  console.warn(`⚠️ ${data.message}`);
+  console.warn(`⚠️ ${(data as any).message}`);
 });
 
 tessen.events.on('tessen:clientReady', (data) => {

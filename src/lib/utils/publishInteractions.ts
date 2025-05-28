@@ -864,18 +864,13 @@ export async function publishInteractions(tessen: Tessen) {
       const commands = await tessenClient.client.application?.commands.set(applicationCommands);
       
       tessen.events.emit('tessen:interactionsPublished', {
-        client: tessenClient,
-        commands: commands?.size || 0,
-        applicationCommands,
-        localizedCommands: applicationCommands.filter(cmd => 
-          'nameLocalizations' in cmd || 'descriptionLocalizations' in cmd
-        ).length
+        clientId: tessenClient.id,
+        count: commands?.size || 0
       });
     } catch (error) {
-      tessen.events.emit('tessen:publishError', {
-        client: tessenClient,
-        error,
-        applicationCommands: clientInteractions.get(tessenClient.id) || []
+      tessen.events.emit('tessen:interactionsPublishError', {
+        clientId: tessenClient.id,
+        error: error as Error
       });
     }
   }
