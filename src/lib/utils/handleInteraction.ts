@@ -1,9 +1,10 @@
 import { Tessen, TessenClient } from "$lib/Tessen";
 import { Interaction as DiscordInteraction, Guild, User } from "discord.js";
 import { ContentValue } from "$lib/Locale";
-import { ChatInputInteractionWrapper, ButtonInteractionWrapper, SelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper, AutocompleteInteractionWrapper } from "$types/Interactions";
+import { ChatInputInteractionWrapper, ButtonInteractionWrapper, StringSelectMenuInteractionWrapper, UserSelectMenuInteractionWrapper, RoleSelectMenuInteractionWrapper, ChannelSelectMenuInteractionWrapper, MentionableSelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper, AutocompleteInteractionWrapper } from "$types/Interactions";
 import { AutocompleteInteraction, ApplicationCommandOptionType } from "discord.js";
 import { SlashCommandOptionChoices } from "$types/SlashCommand";
+import { parseCustomData } from "$types/ComponentBuilder";
 
 // Helper function to create localization objects for interactions
 function createInteractionLocalizationObjects<TessenId extends string>(
@@ -43,8 +44,16 @@ export async function handleInteraction(
       await handleMessageContextMenuCommand(tessen, client, interaction);
     } else if (interaction.isButton()) {
       await handleButtonInteraction(tessen, client, interaction);
-    } else if (interaction.isAnySelectMenu()) {
-      await handleSelectMenuInteraction(tessen, client, interaction);
+    } else if (interaction.isStringSelectMenu()) {
+      await handleStringSelectMenuInteraction(tessen, client, interaction);
+    } else if (interaction.isUserSelectMenu()) {
+      await handleUserSelectMenuInteraction(tessen, client, interaction);
+    } else if (interaction.isRoleSelectMenu()) {
+      await handleRoleSelectMenuInteraction(tessen, client, interaction);
+    } else if (interaction.isChannelSelectMenu()) {
+      await handleChannelSelectMenuInteraction(tessen, client, interaction);
+    } else if (interaction.isMentionableSelectMenu()) {
+      await handleMentionableSelectMenuInteraction(tessen, client, interaction);
     } else if (interaction.isModalSubmit()) {
       await handleModalSubmitInteraction(tessen, client, interaction);
     }
@@ -299,6 +308,8 @@ async function handleButtonInteraction(
   client: TessenClient,
   interaction: ButtonInteractionWrapper['interaction']
 ) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -309,7 +320,8 @@ async function handleButtonInteraction(
   const wrapper: ButtonInteractionWrapper = {
     type: 'button',
     interaction,
-    customId: interaction.customId,
+    customId: baseCustomId,
+    data,
     ...localizationObjects
   };
 
@@ -317,7 +329,7 @@ async function handleButtonInteraction(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'Button' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'Button' && interactionData.id === baseCustomId) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -328,18 +340,20 @@ async function handleButtonInteraction(
     const inspector = cachedInspector.data;
     const result = await inspector.emit({
       type: 'button',
-      id: interaction.customId,
+      id: baseCustomId,
       ctx: wrapper
     });
     if (result !== undefined) return;
   }
 }
 
-async function handleSelectMenuInteraction(
+async function handleStringSelectMenuInteraction(
   tessen: Tessen,
   client: TessenClient,
-  interaction: SelectMenuInteractionWrapper['interaction']
+  interaction: StringSelectMenuInteractionWrapper['interaction']
 ) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -347,29 +361,206 @@ async function handleSelectMenuInteraction(
     interaction
   );
 
-  const wrapper: SelectMenuInteractionWrapper = {
-    type: 'selectMenu',
+  const wrapper: StringSelectMenuInteractionWrapper = {
+    type: 'stringSelectMenu',
     interaction,
-    customId: interaction.customId,
+    customId: baseCustomId,
+    data,
     ...localizationObjects
   };
 
-  // Check cached interactions for select menu handlers registered via Pack
+  // Check cached interactions for string select menu handlers registered via Pack
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'SelectMenu' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'StringSelectMenu' && interactionData.id === baseCustomId) {
       await interactionData.handle(wrapper);
       return;
     }
   }
 
-  // Check inspectors for select menu handlers
+  // Check inspectors for string select menu handlers
   for (const [key, cachedInspector] of tessen.cache.inspectors) {
     const inspector = cachedInspector.data;
     const result = await inspector.emit({
-      type: 'selectMenu',
-      id: interaction.customId,
+      type: 'stringSelectMenu',
+      id: baseCustomId,
+      ctx: wrapper
+    });
+    if (result !== undefined) return;
+  }
+}
+
+async function handleUserSelectMenuInteraction(
+  tessen: Tessen,
+  client: TessenClient,
+  interaction: UserSelectMenuInteractionWrapper['interaction']
+) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
+  const localizationObjects = createInteractionLocalizationObjects(
+    tessen.id,
+    tessen,
+    interaction.guild,
+    interaction
+  );
+
+  const wrapper: UserSelectMenuInteractionWrapper = {
+    type: 'userSelectMenu',
+    interaction,
+    customId: baseCustomId,
+    data,
+    ...localizationObjects
+  };
+
+  // Check cached interactions for user select menu handlers registered via Pack
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interactionData = cachedInteraction.data;
+    
+    if (interactionData.type === 'UserSelectMenu' && interactionData.id === baseCustomId) {
+      await interactionData.handle(wrapper);
+      return;
+    }
+  }
+
+  // Check inspectors for user select menu handlers
+  for (const [key, cachedInspector] of tessen.cache.inspectors) {
+    const inspector = cachedInspector.data;
+    const result = await inspector.emit({
+      type: 'userSelectMenu',
+      id: baseCustomId,
+      ctx: wrapper
+    });
+    if (result !== undefined) return;
+  }
+}
+
+async function handleRoleSelectMenuInteraction(
+  tessen: Tessen,
+  client: TessenClient,
+  interaction: RoleSelectMenuInteractionWrapper['interaction']
+) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
+  const localizationObjects = createInteractionLocalizationObjects(
+    tessen.id,
+    tessen,
+    interaction.guild,
+    interaction
+  );
+
+  const wrapper: RoleSelectMenuInteractionWrapper = {
+    type: 'roleSelectMenu',
+    interaction,
+    customId: baseCustomId,
+    data,
+    ...localizationObjects
+  };
+
+  // Check cached interactions for role select menu handlers registered via Pack
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interactionData = cachedInteraction.data;
+    
+    if (interactionData.type === 'RoleSelectMenu' && interactionData.id === baseCustomId) {
+      await interactionData.handle(wrapper);
+      return;
+    }
+  }
+
+  // Check inspectors for role select menu handlers
+  for (const [key, cachedInspector] of tessen.cache.inspectors) {
+    const inspector = cachedInspector.data;
+    const result = await inspector.emit({
+      type: 'roleSelectMenu',
+      id: baseCustomId,
+      ctx: wrapper
+    });
+    if (result !== undefined) return;
+  }
+}
+
+async function handleChannelSelectMenuInteraction(
+  tessen: Tessen,
+  client: TessenClient,
+  interaction: ChannelSelectMenuInteractionWrapper['interaction']
+) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
+  const localizationObjects = createInteractionLocalizationObjects(
+    tessen.id,
+    tessen,
+    interaction.guild,
+    interaction
+  );
+
+  const wrapper: ChannelSelectMenuInteractionWrapper = {
+    type: 'channelSelectMenu',
+    interaction,
+    customId: baseCustomId,
+    data,
+    ...localizationObjects
+  };
+
+  // Check cached interactions for channel select menu handlers registered via Pack
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interactionData = cachedInteraction.data;
+    
+    if (interactionData.type === 'ChannelSelectMenu' && interactionData.id === baseCustomId) {
+      await interactionData.handle(wrapper);
+      return;
+    }
+  }
+
+  // Check inspectors for channel select menu handlers
+  for (const [key, cachedInspector] of tessen.cache.inspectors) {
+    const inspector = cachedInspector.data;
+    const result = await inspector.emit({
+      type: 'channelSelectMenu',
+      id: baseCustomId,
+      ctx: wrapper
+    });
+    if (result !== undefined) return;
+  }
+}
+
+async function handleMentionableSelectMenuInteraction(
+  tessen: Tessen,
+  client: TessenClient,
+  interaction: MentionableSelectMenuInteractionWrapper['interaction']
+) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
+  const localizationObjects = createInteractionLocalizationObjects(
+    tessen.id,
+    tessen,
+    interaction.guild,
+    interaction
+  );
+
+  const wrapper: MentionableSelectMenuInteractionWrapper = {
+    type: 'mentionableSelectMenu',
+    interaction,
+    customId: baseCustomId,
+    data,
+    ...localizationObjects
+  };
+
+  // Check cached interactions for mentionable select menu handlers registered via Pack
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interactionData = cachedInteraction.data;
+    
+    if (interactionData.type === 'MentionableSelectMenu' && interactionData.id === baseCustomId) {
+      await interactionData.handle(wrapper);
+      return;
+    }
+  }
+
+  // Check inspectors for mentionable select menu handlers
+  for (const [key, cachedInspector] of tessen.cache.inspectors) {
+    const inspector = cachedInspector.data;
+    const result = await inspector.emit({
+      type: 'mentionableSelectMenu',
+      id: baseCustomId,
       ctx: wrapper
     });
     if (result !== undefined) return;
@@ -381,6 +572,8 @@ async function handleModalSubmitInteraction(
   client: TessenClient,
   interaction: ModalInteractionWrapper['interaction']
 ) {
+  const { id: baseCustomId, data } = parseCustomData(interaction.customId);
+  
   const localizationObjects = createInteractionLocalizationObjects(
     tessen.id,
     tessen,
@@ -391,7 +584,8 @@ async function handleModalSubmitInteraction(
   const wrapper: ModalInteractionWrapper = {
     type: 'modal',
     interaction,
-    customId: interaction.customId,
+    customId: baseCustomId,
+    data,
     ...localizationObjects
   };
 
@@ -399,7 +593,7 @@ async function handleModalSubmitInteraction(
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interactionData = cachedInteraction.data;
     
-    if (interactionData.type === 'Modal' && interactionData.id === interaction.customId) {
+    if (interactionData.type === 'Modal' && interactionData.id === baseCustomId) {
       await interactionData.handle(wrapper);
       return;
     }
@@ -410,7 +604,7 @@ async function handleModalSubmitInteraction(
     const inspector = cachedInspector.data;
     const result = await inspector.emit({
       type: 'modal',
-      id: interaction.customId,
+      id: baseCustomId,
       ctx: wrapper
     });
     if (result !== undefined) return;

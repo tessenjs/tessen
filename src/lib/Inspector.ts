@@ -1,7 +1,7 @@
 import { generateCombinations } from "$utils/pattern";
 import { DisposeCallback } from "$types/DisposeCallback";
-import { ButtonHandlerOptions, ChatInputOptions, EmitOptions, InspectorOptions, ModalHandlerOptions, SelectMenuHandlerOptions } from "$types/InspectorOptions";
-import { ChatInputInteractionWrapper, ButtonInteractionWrapper, SelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper } from "$types/Interactions";
+import { ButtonHandlerOptions, ChatInputOptions, EmitOptions, InspectorOptions, ModalHandlerOptions, StringSelectMenuHandlerOptions, UserSelectMenuHandlerOptions, RoleSelectMenuHandlerOptions, ChannelSelectMenuHandlerOptions, MentionableSelectMenuHandlerOptions } from "$types/InspectorOptions";
+import { ChatInputInteractionWrapper, ButtonInteractionWrapper, StringSelectMenuInteractionWrapper, UserSelectMenuInteractionWrapper, RoleSelectMenuInteractionWrapper, ChannelSelectMenuInteractionWrapper, MentionableSelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper } from "$types/Interactions";
 
 export class Inspector {
     public readonly id: string;
@@ -10,7 +10,11 @@ export class Inspector {
     private chatInputCombinationsMap: Map<string, string> = new Map();
     private chatInputHandlers: Map<string, (ctx: ChatInputInteractionWrapper) => void | Promise<void>> = new Map();
     private buttonHandlers: Map<string, (ctx: ButtonInteractionWrapper) => void | Promise<void>> = new Map();
-    private selectMenuHandlers: Map<string, (ctx: SelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private stringSelectMenuHandlers: Map<string, (ctx: StringSelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private userSelectMenuHandlers: Map<string, (ctx: UserSelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private roleSelectMenuHandlers: Map<string, (ctx: RoleSelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private channelSelectMenuHandlers: Map<string, (ctx: ChannelSelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
+    private mentionableSelectMenuHandlers: Map<string, (ctx: MentionableSelectMenuInteractionWrapper) => void | Promise<void>> = new Map();
     private modalHandlers: Map<string, (ctx: ModalInteractionWrapper) => void | Promise<void>> = new Map();
     private userContextMenuHandlers: Map<string, (ctx: UserContextMenuInteractionWrapper) => void | Promise<void>> = new Map();
     private messageContextMenuHandlers: Map<string, (ctx: MessageContextMenuInteractionWrapper) => void | Promise<void>> = new Map();
@@ -42,10 +46,38 @@ export class Inspector {
                     }
                     break;
                     
-                case 'selectMenu':
-                    const selectMenuHandler = this.selectMenuHandlers.get(id);
-                    if (selectMenuHandler) {
-                        return await selectMenuHandler(ctx);
+                case 'stringSelectMenu':
+                    const stringSelectMenuHandler = this.stringSelectMenuHandlers.get(id);
+                    if (stringSelectMenuHandler) {
+                        return await stringSelectMenuHandler(ctx);
+                    }
+                    break;
+
+                case 'userSelectMenu':
+                    const userSelectMenuHandler = this.userSelectMenuHandlers.get(id);
+                    if (userSelectMenuHandler) {
+                        return await userSelectMenuHandler(ctx);
+                    }
+                    break;
+
+                case 'roleSelectMenu':
+                    const roleSelectMenuHandler = this.roleSelectMenuHandlers.get(id);
+                    if (roleSelectMenuHandler) {
+                        return await roleSelectMenuHandler(ctx);
+                    }
+                    break;
+
+                case 'channelSelectMenu':
+                    const channelSelectMenuHandler = this.channelSelectMenuHandlers.get(id);
+                    if (channelSelectMenuHandler) {
+                        return await channelSelectMenuHandler(ctx);
+                    }
+                    break;
+
+                case 'mentionableSelectMenu':
+                    const mentionableSelectMenuHandler = this.mentionableSelectMenuHandlers.get(id);
+                    if (mentionableSelectMenuHandler) {
+                        return await mentionableSelectMenuHandler(ctx);
                     }
                     break;
                     
@@ -105,11 +137,43 @@ export class Inspector {
         };
     }
 
-    selectMenu(options: SelectMenuHandlerOptions): DisposeCallback {
-        this.selectMenuHandlers.set(options.id, options.handle);
+    stringSelectMenu(options: StringSelectMenuHandlerOptions): DisposeCallback {
+        this.stringSelectMenuHandlers.set(options.id, options.handle);
 
         return () => {
-            this.selectMenuHandlers.delete(options.id);
+            this.stringSelectMenuHandlers.delete(options.id);
+        };
+    }
+
+    userSelectMenu(options: UserSelectMenuHandlerOptions): DisposeCallback {
+        this.userSelectMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.userSelectMenuHandlers.delete(options.id);
+        };
+    }
+
+    roleSelectMenu(options: RoleSelectMenuHandlerOptions): DisposeCallback {
+        this.roleSelectMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.roleSelectMenuHandlers.delete(options.id);
+        };
+    }
+
+    channelSelectMenu(options: ChannelSelectMenuHandlerOptions): DisposeCallback {
+        this.channelSelectMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.channelSelectMenuHandlers.delete(options.id);
+        };
+    }
+
+    mentionableSelectMenu(options: MentionableSelectMenuHandlerOptions): DisposeCallback {
+        this.mentionableSelectMenuHandlers.set(options.id, options.handle);
+
+        return () => {
+            this.mentionableSelectMenuHandlers.delete(options.id);
         };
     }
 

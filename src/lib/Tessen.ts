@@ -8,6 +8,10 @@ import { EventData } from "$types/Events";
 import { Inspector } from "$lib/Inspector";
 import { ContentValue, Locale, InteractionLocaleData } from "$lib/Locale";
 import { publishInteractions } from "$utils/publishInteractions";
+import { ComponentBuildConfig, ValidComponentId, encodeCustomData, BuiltComponent } from "$types/ComponentBuilder";
+import { ButtonStyleNames } from "$types/ComponentOptions";
+import { TessenComponentMap } from "../../generated/components";
+import { ComponentType, ButtonStyle, ModalComponentData } from "discord.js";
 
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
@@ -16,6 +20,8 @@ export interface TessenConfig<ID extends string = string> {
   id: ID;
   clients: TessenConfigClient[]
 }
+
+export type SelectComponent = ComponentType.StringSelect | ComponentType.UserSelect | ComponentType.RoleSelect | ComponentType.ChannelSelect | ComponentType.MentionableSelect;
 
 export type CacheData<T> = {
   path: string[];
@@ -126,6 +132,105 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
   async publish() {
     this.refresh();
     await publishInteractions(this);
+  }
+
+  buildComponent<T extends ValidComponentId>(config: ComponentBuildConfig<T>): BuiltComponent {
+    // Find the component registration in cache
+    const cachedComponent = this.cache.interactions.get(config.id as string);
+    
+    if (!cachedComponent) {
+      throw new Error(`Component with id "${String(config.id)}" not found. Make sure it's registered in a pack.`);
+    }
+
+    const componentData = cachedComponent.data;
+    
+    // Generate custom ID with encoded data
+    const customId = encodeCustomData(config.id as string, config.data);
+
+    // Build button component
+    if (componentData.type === 'Button') {
+      const buttonOptions = (componentData as any).options || {};
+      const overrides = (config.overrides as any) || {};
+
+      // Convert style names to Discord.js ButtonStyle enum values
+      const getButtonStyle = (styleName: ButtonStyleNames = 'Primary'): ButtonStyle => {
+        const styleMap: Record<ButtonStyleNames, ButtonStyle> = {
+          'Primary': ButtonStyle.Primary,
+          'Secondary': ButtonStyle.Secondary,
+          'Success': ButtonStyle.Success,
+          'Danger': ButtonStyle.Danger,
+          'Link': ButtonStyle.Link
+        };
+        return styleMap[styleName];
+      };
+
+      const builtButton: BuiltComponent = {
+        type: ComponentType.Button,
+        style: getButtonStyle(overrides.style || buttonOptions.style),
+        label: overrides.label || buttonOptions.label,
+        disabled: overrides.disabled ?? buttonOptions.disabled ?? false,
+        ...(overrides.url || buttonOptions.url ? { url: overrides.url || buttonOptions.url } : { customId }),
+        ...(overrides.emoji || buttonOptions.emoji ? { 
+          emoji: typeof (overrides.emoji || buttonOptions.emoji) === 'string' 
+            ? { name: overrides.emoji || buttonOptions.emoji }
+            : overrides.emoji || buttonOptions.emoji
+        } : {})
+      };
+
+      return builtButton;
+    }
+
+    // Build select menu components
+    if (componentData.type === 'StringSelectMenu' || 
+        componentData.type === 'UserSelectMenu' || 
+        componentData.type === 'RoleSelectMenu' || 
+        componentData.type === 'ChannelSelectMenu' || 
+        componentData.type === 'MentionableSelectMenu') {
+      
+      const selectOptions = (componentData as any).options || {};
+      const overrides = (config.overrides as any) || {};
+
+      // Map component types to Discord.js ComponentType enum values
+      const getSelectMenuType = (type: string): SelectComponent => {
+        const typeMap: Record<string, SelectComponent> = {
+          'StringSelectMenu': ComponentType.StringSelect,
+          'UserSelectMenu': ComponentType.UserSelect,
+          'RoleSelectMenu': ComponentType.RoleSelect,
+          'ChannelSelectMenu': ComponentType.ChannelSelect,
+          'MentionableSelectMenu': ComponentType.MentionableSelect
+        };
+
+        return typeMap[type] as any;
+      };
+
+      const builtSelectMenu: BuiltComponent = {
+        type: getSelectMenuType(componentData.type),
+        customId,
+        placeholder: overrides.placeholder || selectOptions.placeholder,
+        minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+        maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+        disabled: overrides.disabled ?? selectOptions.disabled ?? false,
+        ...(componentData.type === 'StringSelectMenu' && selectOptions.options ? { options: selectOptions.options } : {})
+      };
+
+      return builtSelectMenu;
+    }
+
+    // Build modal component
+    if (componentData.type === 'Modal') {
+      const modalOptions = (componentData as any).options || {};
+      const overrides = (config.overrides as any) || {};
+
+      const builtModal: ModalComponentData = {
+        customId,
+        title: overrides.title || modalOptions.title || 'Modal',
+        components: overrides.components || modalOptions.components || []
+      };
+
+      return builtModal;
+    }
+
+    throw new Error(`Unsupported component type for id "${String(config.id)}"`);
   }
 
   override destroy(): void {

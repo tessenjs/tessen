@@ -18,7 +18,9 @@ Module features:
 - For better performance, map every event and interaction to a single map, for handling to be faster.
 - Use PascalCase for constants.
 - Don't use enums, use string arrays generaly. If a discord.js enum is provided, convert it to string array if necessery.
-
+- Don't write repetitive code, use functions to generate similar code. Or for typings, use mapped types or generics etc.
+- Don't write inner functions, write function in the global scope.
+- Code every typing strictly. Don't use `any` type, use specific types or generics.
 
 # Final Product Example
 ```ts
@@ -155,5 +157,39 @@ tessen.slashCommand({
   }
 }); // () => { } // unloader
 
+
+pack.button({
+  id: 'example-button',
+  handle: (ctx) => {
+    ctx.interaction.reply({
+      content: 'Button clicked!',
+      components: [
+        {
+          type: 1,
+          components: [
+            tessen.buildComponent({
+              id: 'example-button',
+              overrides: {
+                label: 'Click me!',
+                style: 'Primary'
+              },
+              data: [ // data will be appended to the interaction's custom id, and retrieved in the handler, and will be supplied to the wrapped context
+                "some string",
+                123 // some number
+              ]
+            })
+          ]
+        }
+      ],
+      ephemeral: true
+    });
+  },
+  options: {
+    label: 'Example Button',
+    style: 'Primary', // or 'Secondary', 'Success', 'Danger', 'Link'
+    disabled: false, // optional, default is false
+    emoji: '👍'
+  }
+})
 tessen.start();
 ```

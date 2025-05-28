@@ -8,7 +8,27 @@ export type ButtonHandlerOptions = {
     handle: (ctx: any) => void | Promise<void>;
 };
 
-export type SelectMenuHandlerOptions = {
+export type StringSelectMenuHandlerOptions = {
+    id: string;
+    handle: (ctx: any) => void | Promise<void>;
+};
+
+export type UserSelectMenuHandlerOptions = {
+    id: string;
+    handle: (ctx: any) => void | Promise<void>;
+};
+
+export type RoleSelectMenuHandlerOptions = {
+    id: string;
+    handle: (ctx: any) => void | Promise<void>;
+};
+
+export type ChannelSelectMenuHandlerOptions = {
+    id: string;
+    handle: (ctx: any) => void | Promise<void>;
+};
+
+export type MentionableSelectMenuHandlerOptions = {
     id: string;
     handle: (ctx: any) => void | Promise<void>;
 };
@@ -19,7 +39,7 @@ export type ModalHandlerOptions = {
 };
 
 export type EmitOptions = {
-    type: 'chatInput' | 'button' | 'selectMenu' | 'modal' | 'userContextMenu' | 'messageContextMenu';
+    type: 'chatInput' | 'button' | 'stringSelectMenu' | 'userSelectMenu' | 'roleSelectMenu' | 'channelSelectMenu' | 'mentionableSelectMenu' | 'modal' | 'userContextMenu' | 'messageContextMenu';
     id: string;
     ctx: any;
 };

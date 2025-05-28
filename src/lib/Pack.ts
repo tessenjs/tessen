@@ -9,7 +9,11 @@ import {
   UserContextMenuRegistrationConfig,
   MessageContextMenuRegistrationConfig,
   ButtonRegistrationConfig,
-  SelectMenuRegistrationConfig,
+  StringSelectMenuRegistrationConfig,
+  UserSelectMenuRegistrationConfig,
+  RoleSelectMenuRegistrationConfig,
+  ChannelSelectMenuRegistrationConfig,
+  MentionableSelectMenuRegistrationConfig,
   ModalRegistrationConfig,
   UserContextMenuCommand,
   MessageContextMenuCommand
@@ -21,6 +25,7 @@ import { Inspector } from "$lib/Inspector";
 import EventEmitter from "events";
 import { AnyEventRegistrationConfig, EventData } from "$types/Events";
 import { Locale } from "$lib/Locale";
+import { ButtonComponentOptions, SelectMenuComponentOptions, ModalComponentOptions } from "$types/ComponentOptions";
 
 export interface PackConfig {
   id: string;
@@ -110,7 +115,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => this.data.events.delete(eventId);
   }
 
-  userContextMenuCommand<T extends string>(cfg: UserContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+  userContextMenu<T extends string>(cfg: UserContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -124,7 +129,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  messageContextMenuCommand<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+  messageContextMenu<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
@@ -138,7 +143,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  button(cfg: ButtonRegistrationConfig<TessenId>): DisposeCallback {
+  button(cfg: ButtonRegistrationConfig<TessenId> & { options?: ButtonComponentOptions }): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
@@ -152,13 +157,13 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  selectMenu(cfg: SelectMenuRegistrationConfig<TessenId>): DisposeCallback {
+  stringSelectMenu(cfg: StringSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions & { options?: Array<{ label: string; value: string; description?: string; emoji?: string }> } }): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const selectMenuInteraction = {
       ...cfg,
-      type: 'SelectMenu' as const
+      type: 'StringSelectMenu' as const
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -166,7 +171,63 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => this.data.interactions.delete(cfg.id);
   }
 
-  modal(cfg: ModalRegistrationConfig<TessenId>): DisposeCallback {
+  userSelectMenu(cfg: UserSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const selectMenuInteraction = {
+      ...cfg,
+      type: 'UserSelectMenu' as const
+    };
+
+    this.data.interactions.set(cfg.id, selectMenuInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  roleSelectMenu(cfg: RoleSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const selectMenuInteraction = {
+      ...cfg,
+      type: 'RoleSelectMenu' as const
+    };
+
+    this.data.interactions.set(cfg.id, selectMenuInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  channelSelectMenu(cfg: ChannelSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const selectMenuInteraction = {
+      ...cfg,
+      type: 'ChannelSelectMenu' as const
+    };
+
+    this.data.interactions.set(cfg.id, selectMenuInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  mentionableSelectMenu(cfg: MentionableSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+    if (this.data.interactions.has(cfg.id))
+      throw new Error(`Interaction with id ${cfg.id} already exists.`);
+
+    const selectMenuInteraction = {
+      ...cfg,
+      type: 'MentionableSelectMenu' as const
+    };
+
+    this.data.interactions.set(cfg.id, selectMenuInteraction);
+
+    return () => this.data.interactions.delete(cfg.id);
+  }
+
+  modal(cfg: ModalRegistrationConfig<TessenId> & { options?: ModalComponentOptions }): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
