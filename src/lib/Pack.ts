@@ -16,7 +16,14 @@ import {
   MentionableSelectMenuRegistrationConfig,
   ModalRegistrationConfig,
   UserContextMenuCommand,
-  MessageContextMenuCommand
+  MessageContextMenuCommand,
+  ButtonInteractionData,
+  StringSelectMenuInteractionData,
+  UserSelectMenuInteractionData,
+  RoleSelectMenuInteractionData,
+  ChannelSelectMenuInteractionData,
+  MentionableSelectMenuInteractionData,
+  ModalInteractionData
 } from "$types/Interactions";
 import { generateCombinations } from "$utils/pattern";
 import { CommandNameNoCombinationsError } from "./errors/CommandNameNoCombinationsError";
@@ -42,7 +49,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   data = {
     locales: new Collection<string, Locale>(),
     subPacks: new Collection<string, Pack>(),
-    interactions: new Collection<string, Interaction>(),
+    interactions: new Collection<string, Interaction<TessenId>>(),
     events: new Collection<string, EventData>(),
     inspectors: new Collection<string, Inspector>(),
   }
@@ -236,7 +243,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     
     this.isSlashCommandValid(cfg, nameCombinations);
 
-    const slashCommand: SlashCommand = {
+    const slashCommand: SlashCommand<T, TessenId> = {
       ...cfg,
       type: 'ChatInput',
       nameCombinations
@@ -268,7 +275,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
-    const contextMenuCommand: UserContextMenuCommand = {
+    const contextMenuCommand: UserContextMenuCommand<TessenId> = {
       ...cfg,
       type: 'User'
     };
@@ -286,7 +293,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
-    const contextMenuCommand: MessageContextMenuCommand = {
+    const contextMenuCommand: MessageContextMenuCommand<TessenId> = {
       ...cfg,
       type: 'Message'
     };
@@ -304,9 +311,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const buttonInteraction = {
-      ...cfg,
-      type: 'Button' as const
+    const buttonInteraction: ButtonInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'Button' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, buttonInteraction);
@@ -322,9 +330,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction = {
-      ...cfg,
-      type: 'StringSelectMenu' as const
+    const selectMenuInteraction: StringSelectMenuInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'StringSelectMenu' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -340,9 +349,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction = {
-      ...cfg,
-      type: 'UserSelectMenu' as const
+    const selectMenuInteraction: UserSelectMenuInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'UserSelectMenu' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -358,9 +368,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction = {
-      ...cfg,
-      type: 'RoleSelectMenu' as const
+    const selectMenuInteraction: RoleSelectMenuInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'RoleSelectMenu' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -376,9 +387,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction = {
-      ...cfg,
-      type: 'ChannelSelectMenu' as const
+    const selectMenuInteraction: ChannelSelectMenuInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'ChannelSelectMenu' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -394,9 +406,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction = {
-      ...cfg,
-      type: 'MentionableSelectMenu' as const
+    const selectMenuInteraction: MentionableSelectMenuInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'MentionableSelectMenu' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
@@ -412,9 +425,10 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const modalInteraction = {
-      ...cfg,
-      type: 'Modal' as const
+    const modalInteraction: ModalInteractionData<TessenId> = {
+      id: cfg.id,
+      type: 'Modal' as const,
+      handle: cfg.handle
     };
 
     this.data.interactions.set(cfg.id, modalInteraction);

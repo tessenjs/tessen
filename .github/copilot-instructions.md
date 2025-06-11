@@ -22,7 +22,7 @@ Module features:
 - Don't write inner functions, write function in the global scope.
 - Code every typing strictly. Don't use `any` type, use specific types or generics.
 
-# Final Product Example
+# Example
 ```ts
 // tessen is a discord.js based library for creating bots
 // tessen syntax is similar to express.js

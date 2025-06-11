@@ -178,8 +178,8 @@ function getDiscordLocales(internalLocale: string): string[] {
 }
 
 // Helper function to get localized data for interactions
-function getLocalizedInteractionData(
-  tessen: Tessen,
+function getLocalizedInteractionData<ID extends string>(
+  tessen: Tessen<ID>,
   interactionId: string,
   locale: string
 ): CommandInteractionLocale | undefined {
@@ -199,8 +199,8 @@ function getLocalizedInteractionData(
 }
 
 // Helper function to get localized name for a specific command combination
-function getLocalizedCommandName(
-  tessen: Tessen,
+function getLocalizedCommandName<ID extends string>(
+  tessen: Tessen<ID>,
   interactionId: string,
   commandName: string,
   locale: string
@@ -233,8 +233,8 @@ function getLocalizedCommandName(
 }
 
 // Helper function to get localized name parts for subcommands/groups
-function getLocalizedNameParts(
-  tessen: Tessen,
+function getLocalizedNameParts<ID extends string>(
+  tessen: Tessen<ID>,
   interactionId: string,
   originalCombination: string,
   locale: string
@@ -264,8 +264,8 @@ function getLocalizedNameParts(
 }
 
 // Helper function to localize command names and descriptions
-function localizeCommand(
-  tessen: Tessen,
+function localizeCommand<ID extends string>(
+  tessen: Tessen<ID>,
   command: TessenApplicationCommand,
   interactionId: string,
   commandName: string
@@ -302,8 +302,8 @@ function localizeCommand(
 }
 
 // Helper function to build localization maps for subcommand options (non-nested)
-function buildSubcommandOptionLocalizations(
-  tessen: Tessen,
+function buildSubcommandOptionLocalizations<ID extends string>(
+  tessen: Tessen<ID>,
   options: readonly ApplicationCommandOptionData[],
   interactionId: string
 ): ApplicationCommandOptionData[] {
@@ -396,8 +396,8 @@ function buildSubcommandOptionLocalizations(
 }
 
 // Helper function to build localization maps for options
-function buildOptionLocalizations(
-  tessen: Tessen,
+function buildOptionLocalizations<ID extends string>(
+  tessen: Tessen<ID>,
   options: readonly ApplicationCommandOptionData[],
   interactionId: string
 ): ApplicationCommandOptionData[] {
@@ -503,7 +503,7 @@ function buildOptionLocalizations(
   });
 }
 
-export async function publishInteractions(tessen: Tessen) {
+export async function publishInteractions<ID extends string>(tessen: Tessen<ID>) {
   // Group interactions by target client
   const clientInteractions = new Map<string, ApplicationCommandDataResolvable[]>();
   

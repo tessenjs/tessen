@@ -1,6 +1,6 @@
 import { Tessen, TessenClient } from "$lib/Tessen";
 import { Interaction as DiscordInteraction, Guild, User } from "discord.js";
-import { ContentValue } from "$lib/Locale";
+import { ContentValue, GetLocalization } from "$lib/Locale";
 import { ChatInputInteractionWrapper, ButtonInteractionWrapper, StringSelectMenuInteractionWrapper, UserSelectMenuInteractionWrapper, RoleSelectMenuInteractionWrapper, ChannelSelectMenuInteractionWrapper, MentionableSelectMenuInteractionWrapper, ModalInteractionWrapper, UserContextMenuInteractionWrapper, MessageContextMenuInteractionWrapper, AutocompleteInteractionWrapper } from "$types/Interactions";
 import { AutocompleteInteraction, ApplicationCommandOptionType } from "discord.js";
 import { SlashCommandOptionChoices } from "$types/SlashCommand";
@@ -9,7 +9,7 @@ import { parseCustomData } from "$types/ComponentBuilder";
 // Helper function to create localization objects for interactions
 function createInteractionLocalizationObjects<TessenId extends string>(
   tessenId: TessenId,
-  tessen: Tessen,
+  tessen: Tessen<TessenId>,
   guild: Guild | null,
   interaction: DiscordInteraction
 ) {
@@ -22,14 +22,31 @@ function createInteractionLocalizationObjects<TessenId extends string>(
 
   return {
     locale: {
-      guild: guildLocalization,
-      user: userLocalization
+      guild: guildLocalization as GetLocalization<TessenId>,
+      user: userLocalization as GetLocalization<TessenId>
     }
   };
 }
 
-export async function handleInteraction(
-  tessen: Tessen,
+// Helper function to create base interaction context
+function createBaseInteractionContext<TessenId extends string>(
+  tessenId: TessenId,
+  tessen: Tessen<TessenId>,
+  client: TessenClient,
+  guild: Guild | null,
+  interaction: DiscordInteraction
+) {
+  const localizationObjects = createInteractionLocalizationObjects(tessenId, tessen, guild, interaction);
+  
+  return {
+    client,
+    tessenId,
+    ...localizationObjects
+  };
+}
+
+export async function handleInteraction<TessenId extends string = string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
   interaction: DiscordInteraction
 ) {
@@ -66,8 +83,8 @@ export async function handleInteraction(
   }
 }
 
-async function handleAutocompleteInteraction(
-  tessen: Tessen,
+async function handleAutocompleteInteraction<TessenId extends string = string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
   interaction: AutocompleteInteraction
 ) {
@@ -102,19 +119,20 @@ async function handleAutocompleteInteraction(
     type: getOptionTypeString(discordFocusedOption.type)
   };
 
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    fullCommandName as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: AutocompleteInteractionWrapper = {
+  const wrapper: AutocompleteInteractionWrapper<TessenId> = {
     type: 'autocomplete',
     interaction,
     commandName: fullCommandName,
     focusedOption,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Find the matching slash command
@@ -164,10 +182,10 @@ async function handleAutocompleteInteraction(
   await interaction.respond([]);
 }
 
-async function handleChatInputCommand(
-  tessen: Tessen,
+async function handleChatInputCommand<TessenId extends string = string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: ChatInputInteractionWrapper['interaction']
+  interaction: ChatInputInteractionWrapper<TessenId>['interaction']
 ) {
   const commandName = interaction.commandName;
   const subcommand = interaction.options.getSubcommand(false);
@@ -178,18 +196,19 @@ async function handleChatInputCommand(
   if (subcommandGroup) fullCommandName += ` ${subcommandGroup}`;
   if (subcommand) fullCommandName += ` ${subcommand}`;
 
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    fullCommandName as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: ChatInputInteractionWrapper = {
+  const wrapper: ChatInputInteractionWrapper<TessenId> = {
     type: 'chatInput',
     interaction,
     commandName: fullCommandName,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for slash commands
@@ -217,25 +236,26 @@ async function handleChatInputCommand(
   }
 }
 
-async function handleUserContextMenuCommand(
-  tessen: Tessen,
+async function handleUserContextMenuCommand<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: UserContextMenuInteractionWrapper['interaction']
+  interaction: UserContextMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const commandName = interaction.commandName;
 
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    commandName as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: UserContextMenuInteractionWrapper = {
+  const wrapper: UserContextMenuInteractionWrapper<TessenId> = {
     type: 'userContextMenu',
     interaction,
     commandName,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for user context menu commands
@@ -260,25 +280,26 @@ async function handleUserContextMenuCommand(
   }
 }
 
-async function handleMessageContextMenuCommand(
-  tessen: Tessen,
+async function handleMessageContextMenuCommand<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: MessageContextMenuInteractionWrapper['interaction']
+  interaction: MessageContextMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const commandName = interaction.commandName;
 
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    commandName as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: MessageContextMenuInteractionWrapper = {
+  const wrapper: MessageContextMenuInteractionWrapper<TessenId> = {
     type: 'messageContextMenu',
     interaction,
     commandName,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for message context menu commands
@@ -303,26 +324,27 @@ async function handleMessageContextMenuCommand(
   }
 }
 
-async function handleButtonInteraction(
-  tessen: Tessen,
+async function handleButtonInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: ButtonInteractionWrapper['interaction']
+  interaction: ButtonInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: ButtonInteractionWrapper = {
+  const wrapper: ButtonInteractionWrapper<TessenId> = {
     type: 'button',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for button handlers registered via Pack
@@ -347,26 +369,27 @@ async function handleButtonInteraction(
   }
 }
 
-async function handleStringSelectMenuInteraction(
-  tessen: Tessen,
+async function handleStringSelectMenuInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: StringSelectMenuInteractionWrapper['interaction']
+  interaction: StringSelectMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: StringSelectMenuInteractionWrapper = {
+  const wrapper: StringSelectMenuInteractionWrapper<TessenId> = {
     type: 'stringSelectMenu',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for string select menu handlers registered via Pack
@@ -391,26 +414,27 @@ async function handleStringSelectMenuInteraction(
   }
 }
 
-async function handleUserSelectMenuInteraction(
-  tessen: Tessen,
+async function handleUserSelectMenuInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: UserSelectMenuInteractionWrapper['interaction']
+  interaction: UserSelectMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: UserSelectMenuInteractionWrapper = {
+  const wrapper: UserSelectMenuInteractionWrapper<TessenId> = {
     type: 'userSelectMenu',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for user select menu handlers registered via Pack
@@ -435,26 +459,27 @@ async function handleUserSelectMenuInteraction(
   }
 }
 
-async function handleRoleSelectMenuInteraction(
-  tessen: Tessen,
+async function handleRoleSelectMenuInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: RoleSelectMenuInteractionWrapper['interaction']
+  interaction: RoleSelectMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: RoleSelectMenuInteractionWrapper = {
+  const wrapper: RoleSelectMenuInteractionWrapper<TessenId> = {
     type: 'roleSelectMenu',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for role select menu handlers registered via Pack
@@ -479,26 +504,27 @@ async function handleRoleSelectMenuInteraction(
   }
 }
 
-async function handleChannelSelectMenuInteraction(
-  tessen: Tessen,
+async function handleChannelSelectMenuInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: ChannelSelectMenuInteractionWrapper['interaction']
+  interaction: ChannelSelectMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: ChannelSelectMenuInteractionWrapper = {
+  const wrapper: ChannelSelectMenuInteractionWrapper<TessenId> = {
     type: 'channelSelectMenu',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for channel select menu handlers registered via Pack
@@ -523,26 +549,27 @@ async function handleChannelSelectMenuInteraction(
   }
 }
 
-async function handleMentionableSelectMenuInteraction(
-  tessen: Tessen,
+async function handleMentionableSelectMenuInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: MentionableSelectMenuInteractionWrapper['interaction']
+  interaction: MentionableSelectMenuInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: MentionableSelectMenuInteractionWrapper = {
+  const wrapper: MentionableSelectMenuInteractionWrapper<TessenId> = {
     type: 'mentionableSelectMenu',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for mentionable select menu handlers registered via Pack
@@ -567,26 +594,27 @@ async function handleMentionableSelectMenuInteraction(
   }
 }
 
-async function handleModalSubmitInteraction(
-  tessen: Tessen,
+async function handleModalSubmitInteraction<TessenId extends string>(
+  tessen: Tessen<TessenId>,
   client: TessenClient,
-  interaction: ModalInteractionWrapper['interaction']
+  interaction: ModalInteractionWrapper<TessenId>['interaction']
 ) {
   const { id: baseCustomId, data } = await parseCustomData(interaction.customId, tessen.events);
   
-  const localizationObjects = createInteractionLocalizationObjects(
-    tessen.id,
+  const baseContext = createBaseInteractionContext(
+    baseCustomId as TessenId,
     tessen,
+    client,
     interaction.guild,
     interaction
   );
 
-  const wrapper: ModalInteractionWrapper = {
+  const wrapper: ModalInteractionWrapper<TessenId> = {
     type: 'modal',
     interaction,
     customId: baseCustomId,
     data,
-    ...localizationObjects
+    ...baseContext
   };
 
   // Check cached interactions for modal handlers registered via Pack

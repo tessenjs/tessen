@@ -1,6 +1,7 @@
 import { SlashCommand } from "./SlashCommand";
 import { GetLocalization } from "$lib/Locale";
 import { CustomDataValue } from "./ComponentBuilder";
+import { TessenClient } from "$lib/Tessen";
 import { 
   ChatInputCommandInteraction, 
   ButtonInteraction, 
@@ -24,75 +25,81 @@ type LocalizationGetter<TessenId extends string = string> = {
   };
 };
 
-export interface ChatInputInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+// Base context interface that includes common properties for all interactions
+interface BaseInteractionContext<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+  client: TessenClient;
+  tessenId: TessenId;
+}
+
+export interface ChatInputInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'chatInput';
   interaction: ChatInputCommandInteraction;
   commandName: string;
   message?: Message;
 }
 
-export interface ButtonInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface ButtonInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'button';
   interaction: ButtonInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface StringSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface StringSelectMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'stringSelectMenu';
   interaction: StringSelectMenuInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface UserSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface UserSelectMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'userSelectMenu';
   interaction: UserSelectMenuInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface RoleSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface RoleSelectMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'roleSelectMenu';
   interaction: RoleSelectMenuInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface ChannelSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface ChannelSelectMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'channelSelectMenu';
   interaction: ChannelSelectMenuInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface MentionableSelectMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface MentionableSelectMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'mentionableSelectMenu';
   interaction: MentionableSelectMenuInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface ModalInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface ModalInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'modal';
   interaction: ModalSubmitInteraction;
   customId: string;
   data: CustomDataValue[];
 }
 
-export interface UserContextMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface UserContextMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'userContextMenu';
   interaction: UserContextMenuCommandInteraction;
   commandName: string;
 }
 
-export interface MessageContextMenuInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface MessageContextMenuInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'messageContextMenu';
   interaction: MessageContextMenuCommandInteraction;
   commandName: string;
 }
 
-export interface AutocompleteInteractionWrapper<TessenId extends string = string> extends LocalizationGetter<TessenId> {
+export interface AutocompleteInteractionWrapper<TessenId extends string = string> extends BaseInteractionContext<TessenId> {
   type: 'autocomplete';
   interaction: AutocompleteInteraction;
   commandName: string;
@@ -224,6 +231,6 @@ export interface MessageContextMenuCommand<TessenId extends string = string> {
   clientId?: string;
 }
 
-export type MessageInteraction = ChatInputInteractionWrapper;
-export type ActionInteraction = ButtonInteractionWrapper | StringSelectMenuInteractionWrapper | UserSelectMenuInteractionWrapper | RoleSelectMenuInteractionWrapper | ChannelSelectMenuInteractionWrapper | MentionableSelectMenuInteractionWrapper | ModalInteractionWrapper | UserContextMenuInteractionWrapper | MessageContextMenuInteractionWrapper | AutocompleteInteractionWrapper;
-export type Interaction = MessageInteraction | ActionInteraction | SlashCommand | UserContextMenuCommand | MessageContextMenuCommand | ButtonInteractionData | StringSelectMenuInteractionData | UserSelectMenuInteractionData | RoleSelectMenuInteractionData | ChannelSelectMenuInteractionData | MentionableSelectMenuInteractionData | ModalInteractionData;
+export type MessageInteraction<TessenId extends string = string> = ChatInputInteractionWrapper<TessenId>;
+export type ActionInteraction<TessenId extends string = string> = ButtonInteractionWrapper<TessenId> | StringSelectMenuInteractionWrapper<TessenId> | UserSelectMenuInteractionWrapper<TessenId> | RoleSelectMenuInteractionWrapper<TessenId> | ChannelSelectMenuInteractionWrapper<TessenId> | MentionableSelectMenuInteractionWrapper<TessenId> | ModalInteractionWrapper<TessenId> | UserContextMenuInteractionWrapper<TessenId> | MessageContextMenuInteractionWrapper<TessenId> | AutocompleteInteractionWrapper<TessenId>;
+export type Interaction<TessenId extends string = string> = MessageInteraction<TessenId> | ActionInteraction<TessenId> | SlashCommand<string, TessenId> | UserContextMenuCommand<TessenId> | MessageContextMenuCommand<TessenId> | ButtonInteractionData<TessenId> | StringSelectMenuInteractionData<TessenId> | UserSelectMenuInteractionData<TessenId> | RoleSelectMenuInteractionData<TessenId> | ChannelSelectMenuInteractionData<TessenId> | MentionableSelectMenuInteractionData<TessenId> | ModalInteractionData<TessenId>;

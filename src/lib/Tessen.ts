@@ -38,7 +38,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
   cache = {
     locales: new Collection<string, CacheData<Locale>>(),
     subPacks: new Collection<string, CacheData<Pack>>(),
-    interactions: new Collection<string, CacheData<Interaction>>(),
+    interactions: new Collection<string, CacheData<Interaction<ID>>>(),
     events: new Collection<string, CacheData<EventData>>(),
     inspectors: new Collection<string, CacheData<Inspector>>(),
   }
@@ -101,9 +101,9 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
     this.emitEvent('tessen:localesRefreshed', { contentLocales, interactionLocales });
   }
 
-  private pushCache(pack: Pack, path: string[] = []) {
+  private pushCache(pack: Pack<any, any>, path: string[] = []) {
     pack.data.locales.forEach((locale, key) => this.cache.locales.set(key, { path, data: locale }));
-    pack.data.interactions.forEach((interaction, key) => this.cache.interactions.set(key, { path, data: interaction }));
+    pack.data.interactions.forEach((interaction, key) => this.cache.interactions.set(key, { path, data: interaction as Interaction<ID> }));
     pack.data.events.forEach((event, key) => this.cache.events.set(key, { path, data: event }));
     pack.data.inspectors.forEach((inspector, key) => this.cache.inspectors.set(key, { path, data: inspector }));
 
