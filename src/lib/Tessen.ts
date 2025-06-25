@@ -114,6 +114,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
   }
 
   async start() {
+    this.refreshClients();
     this.refresh();
     for (const tessenClient of this.clients.values()) {
       const originalEmit = tessenClient.client.emit.bind(tessenClient.client);
