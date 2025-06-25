@@ -145,10 +145,11 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
     this.events.emit("tessen:clientsReady", { clients: this.clients });
   }
 
-  async publish() {
+  async publish(guildId?: string) {
+    this.refreshClients();
     this.refresh();
     try {
-      await publishInteractions(this);
+      await publishInteractions(this, guildId);
       
       // Emit success events for each client - NOW PROPAGATES to all subpacks automatically
       for (const client of this.clients.values()) {

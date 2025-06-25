@@ -503,7 +503,7 @@ function buildOptionLocalizations<ID extends string>(
   });
 }
 
-export async function publishInteractions<ID extends string>(tessen: Tessen<ID>) {
+export async function publishInteractions<ID extends string>(tessen: Tessen<ID>, guildId?: string) {
   // Group interactions by target client
   const clientInteractions = new Map<string, ApplicationCommandDataResolvable[]>();
   
@@ -857,13 +857,33 @@ export async function publishInteractions<ID extends string>(tessen: Tessen<ID>)
       }
 
       const applicationCommands = clientInteractions.get(tessenClient.id) || [];
-      writeFileSync("./commands.json", JSON.stringify(applicationCommands, null, 2), "utf-8");
-      const commands = await tessenClient.client.application?.commands.set(applicationCommands);
-      
-      tessen.events.emit('tessen:interactionsPublished', {
-        clientId: tessenClient.id,
-        count: commands?.size || 0
-      });
+      if (!guildId) {
+        const commands = await tessenClient.client.application?.commands.set(applicationCommands);
+        
+        tessen.events.emit('tessen:interactionsPublished', {
+          clientId: tessenClient.id,
+          count: commands?.size || 0
+        });
+      } else {
+        const guild = await tessenClient.client.guilds.fetch(guildId).catch(() => null);
+        guild?.commands.set(applicationCommands).then(commands => {
+          tessen.events.emit('tessen:interactionsPublished', {
+            clientId: tessenClient.id,
+            count: commands.size
+          });
+        }).catch(error => {
+          tessen.events.emit('tessen:interactionsPublishError', {
+            clientId: tessenClient.id,
+            error: error as Error
+          });
+        });
+
+        if (!guild) {
+          tessen.events.emit('tessen:publishWarning', {
+            message: `Guild with ID ${guildId} not found for client ${tessenClient.id}`
+          });
+        }
+      }
     } catch (error) {
       tessen.events.emit('tessen:interactionsPublishError', {
         clientId: tessenClient.id,
