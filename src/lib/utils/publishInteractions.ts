@@ -683,7 +683,12 @@ export async function publishInteractions<ID extends string>(
     return;
   }
 
-  // Process slash commands
+  // First, collect all slash commands and group them by base command name and client
+  const allSlashCommands: Map<
+    string,
+    Map<string, { command: SlashCommand; combinations: string[] }[]>
+  > = new Map();
+
   for (const [key, cachedInteraction] of tessen.cache.interactions) {
     const interaction = cachedInteraction.data;
 
@@ -693,8 +698,6 @@ export async function publishInteractions<ID extends string>(
       // Determine target client
       const targetClientId = slashCommand.clientId || defaultClientId;
       if (!clientInteractions.has(targetClientId)) {
-        // Note: This event type doesn't exist in PackEventMap, so we'll emit a generic event
-        // tessen.events.emit('tessen:publishWarning', { ... });
         console.warn(
           `Client '${targetClientId}' not found for interaction '${slashCommand.id}', using default client '${defaultClientId}'`,
         );
@@ -704,9 +707,15 @@ export async function publishInteractions<ID extends string>(
         );
       }
 
-      const targetCommands =
-        clientInteractions.get(targetClientId) ||
-        clientInteractions.get(defaultClientId)!;
+      const actualClientId = clientInteractions.has(targetClientId)
+        ? targetClientId
+        : defaultClientId;
+
+      // Initialize client map if needed
+      if (!allSlashCommands.has(actualClientId)) {
+        allSlashCommands.set(actualClientId, new Map());
+      }
+      const clientCommands = allSlashCommands.get(actualClientId)!;
 
       // Group combinations by base command name
       const commandGroups = new Map<string, string[]>();
@@ -721,95 +730,298 @@ export async function publishInteractions<ID extends string>(
         commandGroups.get(baseCommand)!.push(combination);
       }
 
-      // Process each base command
+      // Add each base command group to the client's commands
       for (const [baseCommandName, combinations] of commandGroups) {
-        const command: TessenApplicationCommand = {
-          name: baseCommandName,
-          description: slashCommand.description,
-          type: ApplicationCommandType.ChatInput,
+        if (!clientCommands.has(baseCommandName)) {
+          clientCommands.set(baseCommandName, []);
+        }
+        clientCommands.get(baseCommandName)!.push({
+          command: slashCommand,
+          combinations: combinations,
+        });
+      }
+    }
+  }
+
+  // Now process the grouped commands
+  for (const [clientId, baseCommandGroups] of allSlashCommands) {
+    const targetCommands = clientInteractions.get(clientId)!;
+
+    for (const [baseCommandName, commandEntries] of baseCommandGroups) {
+      // Use the first command's properties as base for the merged command
+      const firstCommand = commandEntries[0].command;
+
+      // Find the best description (first non-empty one or fallback to first)
+      let bestDescription = firstCommand.description;
+      for (const entry of commandEntries) {
+        if (entry.command.description && entry.command.description.trim()) {
+          bestDescription = entry.command.description;
+          break;
+        }
+      }
+
+      const command: TessenApplicationCommand = {
+        name: baseCommandName,
+        description: bestDescription,
+        type: ApplicationCommandType.ChatInput,
+        options: [],
+        defaultMemberPermissions: convertPermissions(
+          firstCommand.defaultMemberPermissions,
+        ),
+        contexts: convertContextTypes(firstCommand.contexts),
+        nsfw: firstCommand.nsfw || false,
+      };
+
+      // Collect all combinations from all commands with the same base name
+      const allCombinations: string[] = [];
+      const combinationToCommandMap = new Map<string, SlashCommand>();
+
+      for (const entry of commandEntries) {
+        for (const combination of entry.combinations) {
+          allCombinations.push(combination);
+          combinationToCommandMap.set(combination, entry.command);
+        }
+      }
+
+      // Group all combinations by structure across all merged commands
+      const subcommandGroups = new Map<
+        string,
+        { combination: string; command: SlashCommand }[]
+      >();
+      const subcommands: { combination: string; command: SlashCommand }[] = [];
+      let hasTopLevelCommand = false;
+      let topLevelCommand: SlashCommand | undefined;
+
+      for (const combination of allCombinations) {
+        const nameParts = combination.split(" ");
+        const sourceCommand = combinationToCommandMap.get(combination)!;
+
+        if (nameParts.length === 1) {
+          // Top-level command
+          hasTopLevelCommand = true;
+          topLevelCommand = sourceCommand;
+        } else if (nameParts.length === 2) {
+          // Subcommand
+          subcommands.push({ combination, command: sourceCommand });
+        } else if (nameParts.length >= 3) {
+          // Subcommand group
+          const groupName = nameParts[1];
+          if (!subcommandGroups.has(groupName)) {
+            subcommandGroups.set(groupName, []);
+          }
+          subcommandGroups
+            .get(groupName)!
+            .push({ combination, command: sourceCommand });
+        }
+      }
+
+      // Add top-level options if this is a simple command
+      if (
+        hasTopLevelCommand &&
+        subcommands.length === 0 &&
+        subcommandGroups.size === 0 &&
+        topLevelCommand
+      ) {
+        if (topLevelCommand.options) {
+          for (const [optionName, option] of Object.entries(
+            topLevelCommand.options,
+          )) {
+            const commandOption = createCommandOption(optionName, option);
+            command.options!.push(commandOption);
+          }
+        }
+      }
+
+      // Add subcommands (merge by subcommand name if duplicates exist)
+      const subcommandMap = new Map<
+        string,
+        { combination: string; command: SlashCommand }
+      >();
+      for (const subcommandData of subcommands) {
+        const nameParts = subcommandData.combination.split(" ");
+        const subcommandName = nameParts[1];
+
+        // Use the first occurrence of each subcommand name
+        if (!subcommandMap.has(subcommandName)) {
+          subcommandMap.set(subcommandName, subcommandData);
+        }
+      }
+
+      for (const [subcommandName, subcommandData] of subcommandMap) {
+        const { combination: subcommandCombination, command: sourceCommand } =
+          subcommandData;
+
+        const subcommandOption: ApplicationCommandOptionData = {
+          name: subcommandName,
+          description: sourceCommand.description,
+          type: ApplicationCommandOptionType.Subcommand,
           options: [],
-          defaultMemberPermissions: convertPermissions(
-            slashCommand.defaultMemberPermissions,
-          ),
-          contexts: convertContextTypes(slashCommand.contexts),
-          nsfw: slashCommand.nsfw || false,
         };
 
-        // Group combinations by structure
-        const subcommandGroups = new Map<string, string[]>();
-        const subcommands: string[] = [];
-        let hasTopLevelCommand = false;
-
-        for (const combination of combinations) {
-          const nameParts = combination.split(" ");
-
-          if (nameParts.length === 1) {
-            // Top-level command
-            hasTopLevelCommand = true;
-          } else if (nameParts.length === 2) {
-            // Subcommand
-            subcommands.push(combination);
-          } else if (nameParts.length >= 3) {
-            // Subcommand group
-            const groupName = nameParts[1];
-            if (!subcommandGroups.has(groupName)) {
-              subcommandGroups.set(groupName, []);
+        // Add localization for subcommand name and description
+        const subcommandNameLocalizations: Record<string, string> = {};
+        const subcommandDescriptionLocalizations: Record<string, string> = {};
+        for (const [locale, _] of tessen.locales.interaction) {
+          const localizedParts = getLocalizedNameParts(
+            tessen,
+            sourceCommand.id,
+            subcommandCombination,
+            locale,
+          );
+          if (localizedParts?.group) {
+            // For 2-part commands, the second part (group) is the subcommand name
+            const discordLocales = getDiscordLocales(locale);
+            for (const discordLocale of discordLocales) {
+              subcommandNameLocalizations[discordLocale] = localizedParts.group;
             }
-            subcommandGroups.get(groupName)!.push(combination);
           }
-        }
 
-        // Add top-level options if this is a simple command
-        if (
-          hasTopLevelCommand &&
-          subcommands.length === 0 &&
-          subcommandGroups.size === 0
-        ) {
-          if (slashCommand.options) {
-            for (const [optionName, option] of Object.entries(
-              slashCommand.options,
-            )) {
-              const commandOption = createCommandOption(optionName, option);
-              command.options!.push(commandOption);
+          // Get description localization from main command data for this combination
+          const localizedData = getLocalizedInteractionData(
+            tessen,
+            sourceCommand.id,
+            locale,
+          );
+          if (localizedData?.description) {
+            const discordLocales = getDiscordLocales(locale);
+            for (const discordLocale of discordLocales) {
+              subcommandDescriptionLocalizations[discordLocale] =
+                localizedData.description;
             }
           }
         }
 
-        // Add subcommands
-        for (const subcommandCombination of subcommands) {
-          const nameParts = subcommandCombination.split(" ");
-          const subcommandName = nameParts[1];
+        if (Object.keys(subcommandNameLocalizations).length > 0) {
+          (subcommandOption as any).nameLocalizations =
+            subcommandNameLocalizations;
+        }
+
+        if (Object.keys(subcommandDescriptionLocalizations).length > 0) {
+          (subcommandOption as any).descriptionLocalizations =
+            subcommandDescriptionLocalizations;
+        }
+
+        // Add options to subcommand
+        if (sourceCommand.options) {
+          for (const [optionName, option] of Object.entries(
+            sourceCommand.options,
+          )) {
+            const commandOption = createCommandOption(optionName, option);
+            (subcommandOption.options as ApplicationCommandOptionData[]).push(
+              commandOption,
+            );
+          }
+        }
+
+        command.options!.push(subcommandOption);
+      }
+
+      // Add subcommand groups (merge subcommands within groups)
+      for (const [groupName, groupCombinationsData] of subcommandGroups) {
+        // Use the first command's data for the group
+        const firstGroupCommand = groupCombinationsData[0].command;
+
+        const subcommandGroupOption: ApplicationCommandOptionData = {
+          name: groupName,
+          description: firstGroupCommand.description,
+          type: ApplicationCommandOptionType.SubcommandGroup,
+          options: [],
+        };
+
+        // Add localization for subcommand group name and description
+        const groupNameLocalizations: Record<string, string> = {};
+        const groupDescriptionLocalizations: Record<string, string> = {};
+        // Use the first combination in the group to get the group name localization
+        const firstCombination = groupCombinationsData[0].combination;
+        for (const [locale, _] of tessen.locales.interaction) {
+          const localizedParts = getLocalizedNameParts(
+            tessen,
+            firstGroupCommand.id,
+            firstCombination,
+            locale,
+          );
+          if (localizedParts?.group) {
+            // For 3+ part commands, the second part is the group name
+            const discordLocales = getDiscordLocales(locale);
+            for (const discordLocale of discordLocales) {
+              groupNameLocalizations[discordLocale] = localizedParts.group;
+            }
+          }
+
+          // Get description localization from main command data
+          const localizedData = getLocalizedInteractionData(
+            tessen,
+            firstGroupCommand.id,
+            locale,
+          );
+          if (localizedData?.description) {
+            const discordLocales = getDiscordLocales(locale);
+            for (const discordLocale of discordLocales) {
+              groupDescriptionLocalizations[discordLocale] =
+                localizedData.description;
+            }
+          }
+        }
+
+        if (Object.keys(groupNameLocalizations).length > 0) {
+          (subcommandGroupOption as any).nameLocalizations =
+            groupNameLocalizations;
+        }
+
+        if (Object.keys(groupDescriptionLocalizations).length > 0) {
+          (subcommandGroupOption as any).descriptionLocalizations =
+            groupDescriptionLocalizations;
+        }
+
+        // Merge subcommands within the group (avoid duplicates by subcommand name)
+        const groupSubcommandMap = new Map<
+          string,
+          { combination: string; command: SlashCommand }
+        >();
+        for (const groupData of groupCombinationsData) {
+          const nameParts = groupData.combination.split(" ");
+          const subcommandName = nameParts[2];
+
+          // Use the first occurrence of each subcommand name within the group
+          if (!groupSubcommandMap.has(subcommandName)) {
+            groupSubcommandMap.set(subcommandName, groupData);
+          }
+        }
+
+        for (const [subcommandName, subcommandData] of groupSubcommandMap) {
+          const { combination: groupCombination, command: sourceCommand } =
+            subcommandData;
 
           const subcommandOption: ApplicationCommandOptionData = {
             name: subcommandName,
-            description: slashCommand.description,
+            description: sourceCommand.description,
             type: ApplicationCommandOptionType.Subcommand,
             options: [],
           };
 
-          // Add localization for subcommand name and description
+          // Add localization for subcommand name and description within group
           const subcommandNameLocalizations: Record<string, string> = {};
           const subcommandDescriptionLocalizations: Record<string, string> = {};
           for (const [locale, _] of tessen.locales.interaction) {
             const localizedParts = getLocalizedNameParts(
               tessen,
-              slashCommand.id,
-              subcommandCombination,
+              sourceCommand.id,
+              groupCombination,
               locale,
             );
-            if (localizedParts?.group) {
-              // For 2-part commands, the second part (group) is the subcommand name
+            if (localizedParts?.subcommand) {
+              // For 3+ part commands, the third part is the subcommand name
               const discordLocales = getDiscordLocales(locale);
               for (const discordLocale of discordLocales) {
                 subcommandNameLocalizations[discordLocale] =
-                  localizedParts.group;
+                  localizedParts.subcommand;
               }
             }
 
             // Get description localization from main command data for this combination
             const localizedData = getLocalizedInteractionData(
               tessen,
-              slashCommand.id,
+              sourceCommand.id,
               locale,
             );
             if (localizedData?.description) {
@@ -832,9 +1044,9 @@ export async function publishInteractions<ID extends string>(
           }
 
           // Add options to subcommand
-          if (slashCommand.options) {
+          if (sourceCommand.options) {
             for (const [optionName, option] of Object.entries(
-              slashCommand.options,
+              sourceCommand.options,
             )) {
               const commandOption = createCommandOption(optionName, option);
               (subcommandOption.options as ApplicationCommandOptionData[]).push(
@@ -843,205 +1055,89 @@ export async function publishInteractions<ID extends string>(
             }
           }
 
-          command.options!.push(subcommandOption);
+          (
+            subcommandGroupOption.options as ApplicationCommandOptionData[]
+          ).push(subcommandOption);
         }
 
-        // Add subcommand groups
-        for (const [groupName, groupCombinations] of subcommandGroups) {
-          const subcommandGroupOption: ApplicationCommandOptionData = {
-            name: groupName,
-            description: slashCommand.description,
-            type: ApplicationCommandOptionType.SubcommandGroup,
-            options: [],
-          };
+        command.options!.push(subcommandGroupOption);
+      }
 
-          // Add localization for subcommand group name and description
-          const groupNameLocalizations: Record<string, string> = {};
-          const groupDescriptionLocalizations: Record<string, string> = {};
-          // Use the first combination in the group to get the group name localization
-          const firstCombination = groupCombinations[0];
-          for (const [locale, _] of tessen.locales.interaction) {
+      // Apply localizations for the base command using the first command's ID
+      const firstCommandId = firstCommand.id;
+      const commandLocalizations = localizeCommand(
+        tessen,
+        command,
+        firstCommandId,
+        baseCommandName,
+      );
+
+      // Apply name and description localizations
+      const nameLocalizations: Record<string, string> = {};
+      const descriptionLocalizations: Record<string, string> = {};
+
+      // Add base command name localizations - try all command entries for localization
+      for (const [locale, _] of tessen.locales.interaction) {
+        let baseLocalization: string | undefined;
+
+        // Try to get localization from any command entry
+        for (const entry of commandEntries) {
+          for (const combination of entry.combinations) {
             const localizedParts = getLocalizedNameParts(
               tessen,
-              slashCommand.id,
-              firstCombination,
-              locale,
-            );
-            if (localizedParts?.group) {
-              // For 3+ part commands, the second part is the group name
-              const discordLocales = getDiscordLocales(locale);
-              for (const discordLocale of discordLocales) {
-                groupNameLocalizations[discordLocale] = localizedParts.group;
-              }
-            }
-
-            // Get description localization from main command data
-            const localizedData = getLocalizedInteractionData(
-              tessen,
-              slashCommand.id,
-              locale,
-            );
-            if (localizedData?.description) {
-              const discordLocales = getDiscordLocales(locale);
-              for (const discordLocale of discordLocales) {
-                groupDescriptionLocalizations[discordLocale] =
-                  localizedData.description;
-              }
-            }
-          }
-
-          if (Object.keys(groupNameLocalizations).length > 0) {
-            (subcommandGroupOption as any).nameLocalizations =
-              groupNameLocalizations;
-          }
-
-          if (Object.keys(groupDescriptionLocalizations).length > 0) {
-            (subcommandGroupOption as any).descriptionLocalizations =
-              groupDescriptionLocalizations;
-          }
-
-          for (const groupCombination of groupCombinations) {
-            const nameParts = groupCombination.split(" ");
-            const subcommandName = nameParts[2];
-
-            const subcommandOption: ApplicationCommandOptionData = {
-              name: subcommandName,
-              description: slashCommand.description,
-              type: ApplicationCommandOptionType.Subcommand,
-              options: [],
-            };
-
-            // Add localization for subcommand name and description within group
-            const subcommandNameLocalizations: Record<string, string> = {};
-            const subcommandDescriptionLocalizations: Record<string, string> =
-              {};
-            for (const [locale, _] of tessen.locales.interaction) {
-              const localizedParts = getLocalizedNameParts(
-                tessen,
-                slashCommand.id,
-                groupCombination,
-                locale,
-              );
-              if (localizedParts?.subcommand) {
-                // For 3+ part commands, the third part is the subcommand name
-                const discordLocales = getDiscordLocales(locale);
-                for (const discordLocale of discordLocales) {
-                  subcommandNameLocalizations[discordLocale] =
-                    localizedParts.subcommand;
-                }
-              }
-
-              // Get description localization from main command data for this combination
-              const localizedData = getLocalizedInteractionData(
-                tessen,
-                slashCommand.id,
-                locale,
-              );
-              if (localizedData?.description) {
-                const discordLocales = getDiscordLocales(locale);
-                for (const discordLocale of discordLocales) {
-                  subcommandDescriptionLocalizations[discordLocale] =
-                    localizedData.description;
-                }
-              }
-            }
-
-            if (Object.keys(subcommandNameLocalizations).length > 0) {
-              (subcommandOption as any).nameLocalizations =
-                subcommandNameLocalizations;
-            }
-
-            if (Object.keys(subcommandDescriptionLocalizations).length > 0) {
-              (subcommandOption as any).descriptionLocalizations =
-                subcommandDescriptionLocalizations;
-            }
-
-            // Add options to subcommand
-            if (slashCommand.options) {
-              for (const [optionName, option] of Object.entries(
-                slashCommand.options,
-              )) {
-                const commandOption = createCommandOption(optionName, option);
-                (
-                  subcommandOption.options as ApplicationCommandOptionData[]
-                ).push(commandOption);
-              }
-            }
-
-            (
-              subcommandGroupOption.options as ApplicationCommandOptionData[]
-            ).push(subcommandOption);
-          }
-
-          command.options!.push(subcommandGroupOption);
-        }
-
-        // Apply localizations for the base command
-        const commandLocalizations = localizeCommand(
-          tessen,
-          command,
-          slashCommand.id,
-          baseCommandName,
-        );
-
-        // Apply name and description localizations
-        const nameLocalizations: Record<string, string> = {};
-        const descriptionLocalizations: Record<string, string> = {};
-
-        // Add base command name localizations
-        for (const [locale, _] of tessen.locales.interaction) {
-          // Try to get localization from any combination that starts with this base command
-          let baseLocalization: string | undefined;
-          for (const combination of combinations) {
-            const localizedParts = getLocalizedNameParts(
-              tessen,
-              slashCommand.id,
+              entry.command.id,
               combination,
               locale,
             );
             if (localizedParts?.base) {
               baseLocalization = localizedParts.base;
-              break; // Use the first one found
+              break;
             }
           }
+          if (baseLocalization) break;
+        }
 
-          if (baseLocalization) {
-            const discordLocales = getDiscordLocales(locale);
-            for (const discordLocale of discordLocales) {
-              nameLocalizations[discordLocale] = baseLocalization;
-            }
+        if (baseLocalization) {
+          const discordLocales = getDiscordLocales(locale);
+          for (const discordLocale of discordLocales) {
+            nameLocalizations[discordLocale] = baseLocalization;
           }
         }
-
-        for (const [discordLocale, localizationData] of Object.entries(
-          commandLocalizations,
-        )) {
-          if (localizationData.description) {
-            descriptionLocalizations[discordLocale] =
-              localizationData.description;
-          }
-        }
-
-        // Add localizations to command if any exist
-        if (Object.keys(nameLocalizations).length > 0) {
-          (command as any).nameLocalizations = nameLocalizations;
-        }
-        if (Object.keys(descriptionLocalizations).length > 0) {
-          (command as any).descriptionLocalizations = descriptionLocalizations;
-        }
-
-        // Apply option localizations using interaction ID
-        if (command.options && command.options.length > 0) {
-          command.options = buildOptionLocalizations(
-            tessen,
-            command.options as readonly ApplicationCommandOptionData[],
-            slashCommand.id,
-          );
-        }
-
-        targetCommands.push(command);
       }
+
+      for (const [discordLocale, localizationData] of Object.entries(
+        commandLocalizations,
+      )) {
+        if (localizationData.description) {
+          descriptionLocalizations[discordLocale] =
+            localizationData.description;
+        }
+      }
+
+      // Add localizations to command if any exist
+      if (Object.keys(nameLocalizations).length > 0) {
+        (command as any).nameLocalizations = nameLocalizations;
+      }
+      if (Object.keys(descriptionLocalizations).length > 0) {
+        (command as any).descriptionLocalizations = descriptionLocalizations;
+      }
+
+      // Apply option localizations using the first command's interaction ID
+      if (command.options && command.options.length > 0) {
+        command.options = buildOptionLocalizations(
+          tessen,
+          command.options as readonly ApplicationCommandOptionData[],
+          firstCommandId,
+        );
+      }
+
+      targetCommands.push(command);
     }
+  }
+
+  // Process context menu commands
+  for (const [key, cachedInteraction] of tessen.cache.interactions) {
+    const interaction = cachedInteraction.data;
 
     // Process user context menu commands with localization
     if (interaction.type === "User") {
