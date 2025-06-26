@@ -787,8 +787,9 @@ export async function publishInteractions<ID extends string>(
             options: [],
           };
 
-          // Add localization for subcommand name
+          // Add localization for subcommand name and description
           const subcommandNameLocalizations: Record<string, string> = {};
+          const subcommandDescriptionLocalizations: Record<string, string> = {};
           for (const [locale, _] of tessen.locales.interaction) {
             const localizedParts = getLocalizedNameParts(
               tessen,
@@ -804,11 +805,30 @@ export async function publishInteractions<ID extends string>(
                   localizedParts.group;
               }
             }
+
+            // Get description localization from interaction data
+            const localizedData = getLocalizedInteractionData(
+              tessen,
+              slashCommand.id,
+              locale,
+            );
+            if (localizedData?.options?.[subcommandName]?.description) {
+              const discordLocales = getDiscordLocales(locale);
+              for (const discordLocale of discordLocales) {
+                subcommandDescriptionLocalizations[discordLocale] =
+                  localizedData.options[subcommandName].description;
+              }
+            }
           }
 
           if (Object.keys(subcommandNameLocalizations).length > 0) {
             (subcommandOption as any).nameLocalizations =
               subcommandNameLocalizations;
+          }
+
+          if (Object.keys(subcommandDescriptionLocalizations).length > 0) {
+            (subcommandOption as any).descriptionLocalizations =
+              subcommandDescriptionLocalizations;
           }
 
           // Add options to subcommand
@@ -835,8 +855,9 @@ export async function publishInteractions<ID extends string>(
             options: [],
           };
 
-          // Add localization for subcommand group name
+          // Add localization for subcommand group name and description
           const groupNameLocalizations: Record<string, string> = {};
+          const groupDescriptionLocalizations: Record<string, string> = {};
           // Use the first combination in the group to get the group name localization
           const firstCombination = groupCombinations[0];
           for (const [locale, _] of tessen.locales.interaction) {
@@ -853,11 +874,30 @@ export async function publishInteractions<ID extends string>(
                 groupNameLocalizations[discordLocale] = localizedParts.group;
               }
             }
+
+            // Get description localization from interaction data
+            const localizedData = getLocalizedInteractionData(
+              tessen,
+              slashCommand.id,
+              locale,
+            );
+            if (localizedData?.options?.[groupName]?.description) {
+              const discordLocales = getDiscordLocales(locale);
+              for (const discordLocale of discordLocales) {
+                groupDescriptionLocalizations[discordLocale] =
+                  localizedData.options[groupName].description;
+              }
+            }
           }
 
           if (Object.keys(groupNameLocalizations).length > 0) {
             (subcommandGroupOption as any).nameLocalizations =
               groupNameLocalizations;
+          }
+
+          if (Object.keys(groupDescriptionLocalizations).length > 0) {
+            (subcommandGroupOption as any).descriptionLocalizations =
+              groupDescriptionLocalizations;
           }
 
           for (const groupCombination of groupCombinations) {
@@ -871,8 +911,10 @@ export async function publishInteractions<ID extends string>(
               options: [],
             };
 
-            // Add localization for subcommand name within group
+            // Add localization for subcommand name and description within group
             const subcommandNameLocalizations: Record<string, string> = {};
+            const subcommandDescriptionLocalizations: Record<string, string> =
+              {};
             for (const [locale, _] of tessen.locales.interaction) {
               const localizedParts = getLocalizedNameParts(
                 tessen,
@@ -888,11 +930,30 @@ export async function publishInteractions<ID extends string>(
                     localizedParts.subcommand;
                 }
               }
+
+              // Get description localization from interaction data
+              const localizedData = getLocalizedInteractionData(
+                tessen,
+                slashCommand.id,
+                locale,
+              );
+              if (localizedData?.options?.[subcommandName]?.description) {
+                const discordLocales = getDiscordLocales(locale);
+                for (const discordLocale of discordLocales) {
+                  subcommandDescriptionLocalizations[discordLocale] =
+                    localizedData.options[subcommandName].description;
+                }
+              }
             }
 
             if (Object.keys(subcommandNameLocalizations).length > 0) {
               (subcommandOption as any).nameLocalizations =
                 subcommandNameLocalizations;
+            }
+
+            if (Object.keys(subcommandDescriptionLocalizations).length > 0) {
+              (subcommandOption as any).descriptionLocalizations =
+                subcommandDescriptionLocalizations;
             }
 
             // Add options to subcommand
