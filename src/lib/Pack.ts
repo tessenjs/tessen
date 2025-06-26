@@ -3,9 +3,13 @@ import { Collection } from "discord.js";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import { Usable } from "$types/Usable";
-import { SlashCommandName, SlashCommand, SlashCommandRegistrationConfig } from "$types/SlashCommand";
-import { 
-  Interaction, 
+import {
+  SlashCommandName,
+  SlashCommand,
+  SlashCommandRegistrationConfig,
+} from "$types/SlashCommand";
+import {
+  Interaction,
   UserContextMenuRegistrationConfig,
   MessageContextMenuRegistrationConfig,
   ButtonRegistrationConfig,
@@ -23,7 +27,7 @@ import {
   RoleSelectMenuInteractionData,
   ChannelSelectMenuInteractionData,
   MentionableSelectMenuInteractionData,
-  ModalInteractionData
+  ModalInteractionData,
 } from "$types/Interactions";
 import { generateCombinations } from "$utils/pattern";
 import { CommandNameNoCombinationsError } from "./errors/CommandNameNoCombinationsError";
@@ -32,7 +36,11 @@ import { Inspector } from "$lib/Inspector";
 import EventEmitter from "events";
 import { AnyEventRegistrationConfig, EventData } from "$types/Events";
 import { Locale } from "$lib/Locale";
-import { ButtonComponentOptions, SelectMenuComponentOptions, ModalComponentOptions } from "$types/ComponentOptions";
+import {
+  ButtonComponentOptions,
+  SelectMenuComponentOptions,
+  ModalComponentOptions,
+} from "$types/ComponentOptions";
 import { parseCustomDataSync, CustomDataValue } from "$types/ComponentBuilder";
 
 import { PackEventMap } from "$types/PackEvents";
@@ -42,8 +50,11 @@ export interface PackConfig {
   id: string;
 }
 
-export class Pack<Config extends PackConfig = PackConfig, TessenId extends string = string> implements Identifiable {
-
+export class Pack<
+  Config extends PackConfig = PackConfig,
+  TessenId extends string = string,
+> implements Identifiable
+{
   private unloaders: DisposeCallback[] = [];
 
   data = {
@@ -52,28 +63,40 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     interactions: new Collection<string, Interaction<TessenId>>(),
     events: new Collection<string, EventData>(),
     inspectors: new Collection<string, Inspector>(),
-  }
+  };
 
   private _events = new ResultEventEmitter<PackEventMap>();
 
   // Create a proper events object that extends ResultEventEmitter with propagation
   events = (() => {
     const propagatingEmitter = Object.create(this._events);
-    
+
     // Override emit methods to use propagation
-    propagatingEmitter.emit = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown[] => {
+    propagatingEmitter.emit = <K extends keyof PackEventMap>(
+      event: K,
+      ...args: PackEventMap[K]
+    ): unknown[] => {
       return this.emitEvent(event, ...args);
     };
 
-    propagatingEmitter.emitAsync = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): AsyncIterableIterator<unknown> => {
+    propagatingEmitter.emitAsync = <K extends keyof PackEventMap>(
+      event: K,
+      ...args: PackEventMap[K]
+    ): AsyncIterableIterator<unknown> => {
       return this.emitEventAsync(event, ...args);
     };
 
-    propagatingEmitter.emitUntilResultAsync = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown> => {
+    propagatingEmitter.emitUntilResultAsync = <K extends keyof PackEventMap>(
+      event: K,
+      ...args: PackEventMap[K]
+    ): Promise<unknown> => {
       return this.emitEventUntilResultAsync(event, ...args);
     };
 
-    propagatingEmitter.emitUntilResult = <K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown => {
+    propagatingEmitter.emitUntilResult = <K extends keyof PackEventMap>(
+      event: K,
+      ...args: PackEventMap[K]
+    ): unknown => {
       return this.emitEventUntilResultSync(event, ...args);
     };
 
@@ -85,15 +108,17 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   }
 
   constructor(public config: Config) {
-    if (config.id === "tessen")
-      throw new Error("Pack id cannot be 'tessen'.");
+    if (config.id === "tessen") throw new Error("Pack id cannot be 'tessen'.");
   }
 
   // Override emit to propagate events to all subpacks
-  private emitToSubPacks<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): void {
+  private emitToSubPacks<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): void {
     // Emit to this pack
     this._events.emit(event, ...args);
-    
+
     // Recursively emit to all subpacks
     this.data.subPacks.forEach((subPack) => {
       subPack.emitToSubPacks(event, ...args);
@@ -101,69 +126,96 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   }
 
   // Enhanced emit that can collect results from subpacks with async iterator
-  private async* emitToSubPacksWithAsyncIterator<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): AsyncIterableIterator<unknown> {
+  private async *emitToSubPacksWithAsyncIterator<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): AsyncIterableIterator<unknown> {
     // Emit to this pack and yield results
     for await (const result of this._events.emitAsync(event, ...args)) {
       yield result;
     }
-    
+
     // Recursively emit to all subpacks and yield their results
     for (const [, subPack] of this.data.subPacks) {
-      for await (const result of subPack.emitToSubPacksWithAsyncIterator(event, ...args)) {
+      for await (const result of subPack.emitToSubPacksWithAsyncIterator(
+        event,
+        ...args,
+      )) {
         yield result;
       }
     }
   }
 
   // Enhanced async emit that can collect results from subpacks
-  private async emitToSubPacksWithResultsAsync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown[]> {
+  private async emitToSubPacksWithResultsAsync<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): Promise<unknown[]> {
     const allResults: unknown[] = [];
-    
+
     // Collect results from this pack and all subpacks
-    for await (const result of this.emitToSubPacksWithAsyncIterator(event, ...args)) {
+    for await (const result of this.emitToSubPacksWithAsyncIterator(
+      event,
+      ...args,
+    )) {
       allResults.push(result);
     }
-    
+
     return allResults;
   }
 
   // Public method to emit events that propagate to subpacks
-  emitEvent<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown[] {
+  emitEvent<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): unknown[] {
     const allResults: unknown[] = [];
-    
+
     // Collect results from this pack
     const thisResults = this._events.emit(event, ...args);
     allResults.push(...thisResults);
-    
+
     // Recursively collect results from all subpacks
     this.data.subPacks.forEach((subPack) => {
       const subResults = subPack.emitEvent(event, ...args);
       allResults.push(...subResults);
     });
-    
+
     return allResults;
   }
 
   // Public method to emit events and get async iterator for all results
-  async* emitEventAsync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): AsyncIterableIterator<unknown> {
-    for await (const result of this.emitToSubPacksWithAsyncIterator(event, ...args)) {
+  async *emitEventAsync<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): AsyncIterableIterator<unknown> {
+    for await (const result of this.emitToSubPacksWithAsyncIterator(
+      event,
+      ...args,
+    )) {
       yield result;
     }
   }
 
   // Public method to emit events and collect all results from all packs (async-aware)
-  async emitEventWithResultsAsync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown[]> {
+  async emitEventWithResultsAsync<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): Promise<unknown[]> {
     return await this.emitToSubPacksWithResultsAsync(event, ...args);
   }
 
   // Emit until first truthy result (async-aware)
-  async emitEventUntilResultAsync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): Promise<unknown> {
+  async emitEventUntilResultAsync<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): Promise<unknown> {
     // Try this pack first
     const thisResult = await this._events.emitUntilResultAsync(event, ...args);
     if (thisResult !== undefined) {
       return thisResult;
     }
-    
+
     // Try subpacks
     for (const [, subPack] of this.data.subPacks) {
       const subResult = await subPack.emitEventUntilResultAsync(event, ...args);
@@ -171,18 +223,21 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
         return subResult;
       }
     }
-    
+
     return undefined;
   }
 
   // Emit until first truthy result (sync only, faster)
-  emitEventUntilResultSync<K extends keyof PackEventMap>(event: K, ...args: PackEventMap[K]): unknown {
+  emitEventUntilResultSync<K extends keyof PackEventMap>(
+    event: K,
+    ...args: PackEventMap[K]
+  ): unknown {
     // Try this pack first
     const thisResult = this._events.emitUntilResult(event, ...args);
     if (thisResult !== undefined) {
       return thisResult;
     }
-    
+
     // Try subpacks
     for (const [, subPack] of this.data.subPacks) {
       const subResult = subPack.emitEventUntilResultSync(event, ...args);
@@ -190,7 +245,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
         return subResult;
       }
     }
-    
+
     return undefined;
   }
 
@@ -201,28 +256,34 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
       switch (true) {
         case arg instanceof Pack: {
           this.data.subPacks.set(arg.id, arg);
-          this.emitEvent('pack:loaded', { packId: arg.id });
+          this.emitEvent("pack:loaded", { packId: arg.id });
           disposeCallbacks.push(() => {
             this.data.subPacks.delete(arg.id);
-            this.emitEvent('pack:unloaded', { packId: arg.id });
+            this.emitEvent("pack:unloaded", { packId: arg.id });
           });
           break;
         }
         case arg instanceof Inspector: {
           this.data.inspectors.set(arg.id, arg);
-          this.emitEvent('inspector:registered', { inspectorId: arg.id });
+          this.emitEvent("inspector:registered", { inspectorId: arg.id });
           disposeCallbacks.push(() => {
             this.data.inspectors.delete(arg.id);
-            this.emitEvent('inspector:unregistered', { inspectorId: arg.id });
+            this.emitEvent("inspector:unregistered", { inspectorId: arg.id });
           });
           break;
         }
         case arg instanceof Locale: {
           this.data.locales.set(arg.id, arg);
-          this.emitEvent('locale:loaded', { localeId: arg.id, language: 'unknown' });
+          this.emitEvent("locale:loaded", {
+            localeId: arg.id,
+            language: "unknown",
+          });
           disposeCallbacks.push(() => {
             this.data.locales.delete(arg.id);
-            this.emitEvent('locale:unloaded', { localeId: arg.id, language: 'unknown' });
+            this.emitEvent("locale:unloaded", {
+              localeId: arg.id,
+              language: "unknown",
+            });
           });
           break;
         }
@@ -232,211 +293,298 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     return () => {
       disposeCallbacks.forEach((dispose) => dispose());
       disposeCallbacks.length = 0;
-    }
+    };
   }
 
-  slashCommand<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never, TessenId>): DisposeCallback {
+  slashCommand<T extends string>(
+    cfg: SlashCommandRegistrationConfig<
+      T extends SlashCommandName<T> ? T : never,
+      TessenId
+    >,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
     const nameCombinations = generateCombinations(cfg.name);
-    
+
     this.isSlashCommandValid(cfg, nameCombinations);
 
     const slashCommand: SlashCommand<T, TessenId> = {
       ...cfg,
-      type: 'ChatInput',
-      nameCombinations
+      type: "ChatInput",
+      nameCombinations,
     };
 
     this.data.interactions.set(cfg.id, slashCommand);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'ChatInput' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "ChatInput",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'ChatInput' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "ChatInput",
+      });
     };
   }
 
   event(cfg: AnyEventRegistrationConfig): DisposeCallback {
     const eventId = `${this.id}:${cfg.event}:${Date.now()}`;
-    
+
     const eventData: EventData = {
       event: cfg.event,
-      handle: cfg.handle
+      handle: cfg.handle,
     };
-    
+
     this.data.events.set(eventId, eventData);
 
     return () => this.data.events.delete(eventId);
   }
 
-  userContextMenu<T extends string>(cfg: UserContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+  userContextMenu<T extends string>(
+    cfg: UserContextMenuRegistrationConfig<T, TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
     const contextMenuCommand: UserContextMenuCommand<TessenId> = {
       ...cfg,
-      type: 'User'
+      type: "User",
     };
 
     this.data.interactions.set(cfg.id, contextMenuCommand);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'User' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "User",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'User' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "User",
+      });
     };
   }
 
-  messageContextMenu<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback {
+  messageContextMenu<T extends string>(
+    cfg: MessageContextMenuRegistrationConfig<T, TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
     const contextMenuCommand: MessageContextMenuCommand<TessenId> = {
       ...cfg,
-      type: 'Message'
+      type: "Message",
     };
 
     this.data.interactions.set(cfg.id, contextMenuCommand);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'Message' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "Message",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'Message' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "Message",
+      });
     };
   }
 
-  button(cfg: ButtonRegistrationConfig<TessenId> & { options?: ButtonComponentOptions }): DisposeCallback {
+  button(cfg: ButtonRegistrationConfig<TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const buttonInteraction: ButtonInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'Button' as const,
-      handle: cfg.handle
+      type: "Button" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, buttonInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'Button' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "Button",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'Button' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "Button",
+      });
     };
   }
 
-  stringSelectMenu(cfg: StringSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions & { options?: Array<{ label: string; value: string; description?: string; emoji?: string }> } }): DisposeCallback {
+  stringSelectMenu(
+    cfg: StringSelectMenuRegistrationConfig<TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const selectMenuInteraction: StringSelectMenuInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'StringSelectMenu' as const,
-      handle: cfg.handle
+      type: "StringSelectMenu" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'StringSelectMenu' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "StringSelectMenu",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'StringSelectMenu' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "StringSelectMenu",
+      });
     };
   }
 
-  userSelectMenu(cfg: UserSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+  userSelectMenu(
+    cfg: UserSelectMenuRegistrationConfig<TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const selectMenuInteraction: UserSelectMenuInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'UserSelectMenu' as const,
-      handle: cfg.handle
+      type: "UserSelectMenu" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'UserSelectMenu' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "UserSelectMenu",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'UserSelectMenu' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "UserSelectMenu",
+      });
     };
   }
 
-  roleSelectMenu(cfg: RoleSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+  roleSelectMenu(
+    cfg: RoleSelectMenuRegistrationConfig<TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const selectMenuInteraction: RoleSelectMenuInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'RoleSelectMenu' as const,
-      handle: cfg.handle
+      type: "RoleSelectMenu" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'RoleSelectMenu' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "RoleSelectMenu",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'RoleSelectMenu' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "RoleSelectMenu",
+      });
     };
   }
 
-  channelSelectMenu(cfg: ChannelSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+  channelSelectMenu(
+    cfg: ChannelSelectMenuRegistrationConfig<TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const selectMenuInteraction: ChannelSelectMenuInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'ChannelSelectMenu' as const,
-      handle: cfg.handle
+      type: "ChannelSelectMenu" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'ChannelSelectMenu' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "ChannelSelectMenu",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'ChannelSelectMenu' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "ChannelSelectMenu",
+      });
     };
   }
 
-  mentionableSelectMenu(cfg: MentionableSelectMenuRegistrationConfig<TessenId> & { options?: SelectMenuComponentOptions }): DisposeCallback {
+  mentionableSelectMenu(
+    cfg: MentionableSelectMenuRegistrationConfig<TessenId>,
+  ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: MentionableSelectMenuInteractionData<TessenId> = {
-      id: cfg.id,
-      type: 'MentionableSelectMenu' as const,
-      handle: cfg.handle
-    };
+    const selectMenuInteraction: MentionableSelectMenuInteractionData<TessenId> =
+      {
+        id: cfg.id,
+        type: "MentionableSelectMenu" as const,
+        handle: cfg.handle,
+        options: cfg.options,
+      };
 
     this.data.interactions.set(cfg.id, selectMenuInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'MentionableSelectMenu' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "MentionableSelectMenu",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'MentionableSelectMenu' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "MentionableSelectMenu",
+      });
     };
   }
 
-  modal(cfg: ModalRegistrationConfig<TessenId> & { options?: ModalComponentOptions }): DisposeCallback {
+  modal(cfg: ModalRegistrationConfig<TessenId>): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
     const modalInteraction: ModalInteractionData<TessenId> = {
       id: cfg.id,
-      type: 'Modal' as const,
-      handle: cfg.handle
+      type: "Modal" as const,
+      handle: cfg.handle,
+      options: cfg.options,
     };
 
     this.data.interactions.set(cfg.id, modalInteraction);
-    this.emitEvent('interaction:registered', { interactionId: cfg.id, type: 'Modal' });
+    this.emitEvent("interaction:registered", {
+      interactionId: cfg.id,
+      type: "Modal",
+    });
 
     return () => {
       this.data.interactions.delete(cfg.id);
-      this.emitEvent('interaction:unregistered', { interactionId: cfg.id, type: 'Modal' });
+      this.emitEvent("interaction:unregistered", {
+        interactionId: cfg.id,
+        type: "Modal",
+      });
     };
   }
 
@@ -446,7 +594,9 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
   }
 
   // Helper method for parsing custom data with sequential async processing
-  async parseCustomDataAsync(customId: string): Promise<{ id: string; data: CustomDataValue[] }> {
+  async parseCustomDataAsync(
+    customId: string,
+  ): Promise<{ id: string; data: CustomDataValue[] }> {
     const { parseCustomData } = await import("$types/ComponentBuilder");
     return parseCustomData(customId, this.events);
   }
@@ -455,20 +605,33 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
    * @throws {CommandNameNoCombinationsError} if the command has no name combinations.
    * @throws {CommandNameExceededMaxLengthError} if the command has a name combination with more than 3 words or a word with more than 32 characters.
    */
-  private isSlashCommandValid<T extends string>(cfg: SlashCommandRegistrationConfig<T extends SlashCommandName<T> ? T : never, TessenId>, nameCombinations: string[]) {
+  private isSlashCommandValid<T extends string>(
+    cfg: SlashCommandRegistrationConfig<
+      T extends SlashCommandName<T> ? T : never,
+      TessenId
+    >,
+    nameCombinations: string[],
+  ) {
     if (nameCombinations.length === 0)
-      throw new CommandNameNoCombinationsError({ message: `Interaction with id "${cfg.id}" has no name combinations.` });
-  
-    const nameCombinationsSplited = nameCombinations.map((name) => name.split(" "));
+      throw new CommandNameNoCombinationsError({
+        message: `Interaction with id "${cfg.id}" has no name combinations.`,
+      });
 
-    if (nameCombinationsSplited.some((name) => name.length > 3 || name.some((word) => word.length > 32))) 
-      throw new CommandNameExceededMaxLengthError({ 
+    const nameCombinationsSplited = nameCombinations.map((name) =>
+      name.split(" "),
+    );
+
+    if (
+      nameCombinationsSplited.some(
+        (name) => name.length > 3 || name.some((word) => word.length > 32),
+      )
+    )
+      throw new CommandNameExceededMaxLengthError({
         message: `Interaction with id "${cfg.id}" has a name combination with more than 3 words. Or a word with more than 32 characters.`,
         nameCombinationsSplited,
       });
-    
   }
-  
+
   unload(...callbacks: DisposeCallback[]): void {
     this.unloaders.push(...callbacks);
   }
@@ -483,8 +646,7 @@ export class Pack<Config extends PackConfig = PackConfig, TessenId extends strin
     this.data.locales.clear();
     this.data.subPacks.clear();
 
-    this.emitEvent('pack:destroyed', { packId: this.id });
+    this.emitEvent("pack:destroyed", { packId: this.id });
     this._events.removeAllListeners();
   }
-
 }
