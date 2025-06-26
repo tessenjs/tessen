@@ -23,7 +23,7 @@ jobs:
       - run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-      - run: npm version prerelease --preid=dev --allow-dirty
+      - run: npm version prerelease --preid=dev --force
       - run: git push --follow-tags
       - run: npm publish --tag dev
         env:
