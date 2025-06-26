@@ -113,6 +113,33 @@ function convertPermissions(
   return permissions;
 }
 
+// Convert camelCase to snake_case
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+// Convert object keys from camelCase to snake_case recursively
+function convertToSnakeCase(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertToSnakeCase(item));
+  }
+
+  if (typeof obj === "object") {
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const snakeKey = toSnakeCase(key);
+      converted[snakeKey] = convertToSnakeCase(value);
+    }
+    return converted;
+  }
+
+  return obj;
+}
+
 // Type for our command structure that matches Discord API expectations
 interface TessenApplicationCommand {
   name: string;
@@ -1075,7 +1102,7 @@ export async function publishInteractions<ID extends string>(
       switch (publishType) {
         case "Guild": {
           await rest.put(Routes.applicationGuildCommands(me.id, guildId!), {
-            body: body[client.namespace] || [],
+            body: convertToSnakeCase(body[client.namespace] || []),
           });
 
           tessen.events.emit("tessen:interactionsPublished", {
@@ -1086,7 +1113,7 @@ export async function publishInteractions<ID extends string>(
         }
         case "Global": {
           await rest.put(Routes.applicationCommands(me.id), {
-            body: body[client.namespace] || [],
+            body: convertToSnakeCase(body[client.namespace] || []),
           });
 
           tessen.events.emit("tessen:interactionsPublished", {
