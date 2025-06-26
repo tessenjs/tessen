@@ -806,17 +806,17 @@ export async function publishInteractions<ID extends string>(
               }
             }
 
-            // Get description localization from interaction data
+            // Get description localization from main command data for this combination
             const localizedData = getLocalizedInteractionData(
               tessen,
               slashCommand.id,
               locale,
             );
-            if (localizedData?.options?.[subcommandName]?.description) {
+            if (localizedData?.description) {
               const discordLocales = getDiscordLocales(locale);
               for (const discordLocale of discordLocales) {
                 subcommandDescriptionLocalizations[discordLocale] =
-                  localizedData.options[subcommandName].description;
+                  localizedData.description;
               }
             }
           }
@@ -875,17 +875,17 @@ export async function publishInteractions<ID extends string>(
               }
             }
 
-            // Get description localization from interaction data
+            // Get description localization from main command data
             const localizedData = getLocalizedInteractionData(
               tessen,
               slashCommand.id,
               locale,
             );
-            if (localizedData?.options?.[groupName]?.description) {
+            if (localizedData?.description) {
               const discordLocales = getDiscordLocales(locale);
               for (const discordLocale of discordLocales) {
                 groupDescriptionLocalizations[discordLocale] =
-                  localizedData.options[groupName].description;
+                  localizedData.description;
               }
             }
           }
@@ -931,17 +931,17 @@ export async function publishInteractions<ID extends string>(
                 }
               }
 
-              // Get description localization from interaction data
+              // Get description localization from main command data for this combination
               const localizedData = getLocalizedInteractionData(
                 tessen,
                 slashCommand.id,
                 locale,
               );
-              if (localizedData?.options?.[subcommandName]?.description) {
+              if (localizedData?.description) {
                 const discordLocales = getDiscordLocales(locale);
                 for (const discordLocale of discordLocales) {
                   subcommandDescriptionLocalizations[discordLocale] =
-                    localizedData.options[subcommandName].description;
+                    localizedData.description;
                 }
               }
             }
