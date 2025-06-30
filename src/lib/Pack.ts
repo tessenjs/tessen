@@ -51,8 +51,7 @@ export interface PackConfig {
 }
 
 export class Pack<
-  Config extends PackConfig = PackConfig,
-  TessenId extends string = string,
+  Config extends PackConfig = PackConfig
 > implements Identifiable
 {
   private unloaders: DisposeCallback[] = [];
@@ -60,7 +59,7 @@ export class Pack<
   data = {
     locales: new Collection<string, Locale>(),
     subPacks: new Collection<string, Pack>(),
-    interactions: new Collection<string, Interaction<TessenId>>(),
+    interactions: new Collection<string, Interaction>(),
     events: new Collection<string, EventData>(),
     inspectors: new Collection<string, Inspector>(),
   };
@@ -298,8 +297,7 @@ export class Pack<
 
   slashCommand<T extends string>(
     cfg: SlashCommandRegistrationConfig<
-      T extends SlashCommandName<T> ? T : never,
-      TessenId
+      T extends SlashCommandName<T> ? T : never
     >,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
@@ -309,7 +307,7 @@ export class Pack<
 
     this.isSlashCommandValid(cfg, nameCombinations);
 
-    const slashCommand: SlashCommand<T, TessenId> = {
+    const slashCommand: SlashCommand<T> = {
       ...cfg,
       type: "ChatInput",
       nameCombinations,
@@ -344,12 +342,12 @@ export class Pack<
   }
 
   userContextMenu<T extends string>(
-    cfg: UserContextMenuRegistrationConfig<T, TessenId>,
+    cfg: UserContextMenuRegistrationConfig<T>,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
-    const contextMenuCommand: UserContextMenuCommand<TessenId> = {
+    const contextMenuCommand: UserContextMenuCommand = {
       ...cfg,
       type: "User",
     };
@@ -370,12 +368,12 @@ export class Pack<
   }
 
   messageContextMenu<T extends string>(
-    cfg: MessageContextMenuRegistrationConfig<T, TessenId>,
+    cfg: MessageContextMenuRegistrationConfig<T>,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with name ${cfg.id} already exists.`);
 
-    const contextMenuCommand: MessageContextMenuCommand<TessenId> = {
+    const contextMenuCommand: MessageContextMenuCommand = {
       ...cfg,
       type: "Message",
     };
@@ -395,11 +393,11 @@ export class Pack<
     };
   }
 
-  button(cfg: ButtonRegistrationConfig<TessenId>): DisposeCallback {
+  button(cfg: ButtonRegistrationConfig): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const buttonInteraction: ButtonInteractionData<TessenId> = {
+    const buttonInteraction: ButtonInteractionData = {
       id: cfg.id,
       type: "Button" as const,
       handle: cfg.handle,
@@ -422,12 +420,12 @@ export class Pack<
   }
 
   stringSelectMenu(
-    cfg: StringSelectMenuRegistrationConfig<TessenId>,
+    cfg: StringSelectMenuRegistrationConfig,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: StringSelectMenuInteractionData<TessenId> = {
+    const selectMenuInteraction: StringSelectMenuInteractionData = {
       id: cfg.id,
       type: "StringSelectMenu" as const,
       handle: cfg.handle,
@@ -450,12 +448,12 @@ export class Pack<
   }
 
   userSelectMenu(
-    cfg: UserSelectMenuRegistrationConfig<TessenId>,
+    cfg: UserSelectMenuRegistrationConfig,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: UserSelectMenuInteractionData<TessenId> = {
+    const selectMenuInteraction: UserSelectMenuInteractionData = {
       id: cfg.id,
       type: "UserSelectMenu" as const,
       handle: cfg.handle,
@@ -478,12 +476,12 @@ export class Pack<
   }
 
   roleSelectMenu(
-    cfg: RoleSelectMenuRegistrationConfig<TessenId>,
+    cfg: RoleSelectMenuRegistrationConfig,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: RoleSelectMenuInteractionData<TessenId> = {
+    const selectMenuInteraction: RoleSelectMenuInteractionData = {
       id: cfg.id,
       type: "RoleSelectMenu" as const,
       handle: cfg.handle,
@@ -506,12 +504,12 @@ export class Pack<
   }
 
   channelSelectMenu(
-    cfg: ChannelSelectMenuRegistrationConfig<TessenId>,
+    cfg: ChannelSelectMenuRegistrationConfig,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: ChannelSelectMenuInteractionData<TessenId> = {
+    const selectMenuInteraction: ChannelSelectMenuInteractionData = {
       id: cfg.id,
       type: "ChannelSelectMenu" as const,
       handle: cfg.handle,
@@ -534,12 +532,12 @@ export class Pack<
   }
 
   mentionableSelectMenu(
-    cfg: MentionableSelectMenuRegistrationConfig<TessenId>,
+    cfg: MentionableSelectMenuRegistrationConfig,
   ): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const selectMenuInteraction: MentionableSelectMenuInteractionData<TessenId> =
+    const selectMenuInteraction: MentionableSelectMenuInteractionData =
       {
         id: cfg.id,
         type: "MentionableSelectMenu" as const,
@@ -562,11 +560,11 @@ export class Pack<
     };
   }
 
-  modal(cfg: ModalRegistrationConfig<TessenId>): DisposeCallback {
+  modal(cfg: ModalRegistrationConfig): DisposeCallback {
     if (this.data.interactions.has(cfg.id))
       throw new Error(`Interaction with id ${cfg.id} already exists.`);
 
-    const modalInteraction: ModalInteractionData<TessenId> = {
+    const modalInteraction: ModalInteractionData = {
       id: cfg.id,
       type: "Modal" as const,
       handle: cfg.handle,
@@ -607,8 +605,7 @@ export class Pack<
    */
   private isSlashCommandValid<T extends string>(
     cfg: SlashCommandRegistrationConfig<
-      T extends SlashCommandName<T> ? T : never,
-      TessenId
+      T extends SlashCommandName<T> ? T : never
     >,
     nameCombinations: string[],
   ) {

@@ -51,7 +51,7 @@ function extractContextInfo(eventName: string, args: any[]): { guild: Guild | nu
 // Helper function to create localization objects for events
 function createEventLocalizationObjects<TessenId extends string>(
   tessenId: TessenId,
-  tessen: Tessen<TessenId>,
+  tessen: Tessen,
   guild: Guild | null,
   interaction: Interaction | null
 ) {
@@ -71,7 +71,7 @@ function createEventLocalizationObjects<TessenId extends string>(
 }
 
 export async function handleEvent<TessenId extends string = string>(
-  tessen: Tessen<TessenId>,
+  tessen: Tessen,
   client: TessenClient,
   eventName: keyof typeof TessenClientEventMap,
   args: any[]

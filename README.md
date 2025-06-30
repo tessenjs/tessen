@@ -378,13 +378,13 @@ class Pack<Config extends PackConfig = PackConfig, TessenId extends string = str
   messageContextMenu<T extends string>(cfg: MessageContextMenuRegistrationConfig<T, TessenId>): DisposeCallback
   
   // Component registration
-  button(cfg: ButtonRegistrationConfig<TessenId>): DisposeCallback
-  stringSelectMenu(cfg: StringSelectMenuRegistrationConfig<TessenId>): DisposeCallback
-  userSelectMenu(cfg: UserSelectMenuRegistrationConfig<TessenId>): DisposeCallback
-  roleSelectMenu(cfg: RoleSelectMenuRegistrationConfig<TessenId>): DisposeCallback
-  channelSelectMenu(cfg: ChannelSelectMenuRegistrationConfig<TessenId>): DisposeCallback
-  mentionableSelectMenu(cfg: MentionableSelectMenuRegistrationConfig<TessenId>): DisposeCallback
-  modal(cfg: ModalRegistrationConfig<TessenId>): DisposeCallback
+  button(cfg: ButtonRegistrationConfig): DisposeCallback
+  stringSelectMenu(cfg: StringSelectMenuRegistrationConfig): DisposeCallback
+  userSelectMenu(cfg: UserSelectMenuRegistrationConfig): DisposeCallback
+  roleSelectMenu(cfg: RoleSelectMenuRegistrationConfig): DisposeCallback
+  channelSelectMenu(cfg: ChannelSelectMenuRegistrationConfig): DisposeCallback
+  mentionableSelectMenu(cfg: MentionableSelectMenuRegistrationConfig): DisposeCallback
+  modal(cfg: ModalRegistrationConfig): DisposeCallback
   
   // Event handling
   event(cfg: AnyEventRegistrationConfig): DisposeCallback

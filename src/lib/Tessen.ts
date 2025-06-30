@@ -18,8 +18,8 @@ import { ResultEventEmitter } from "$types/ResultEventEmitter";
 export type TessenConfigClient = { id: string, options: ClientOptions, token: string };
 export type TessenClient = { id: string, client: Client, token: string };
 
-export interface TessenConfig<ID extends string = string> {
-  id: ID;
+export interface TessenConfig {
+  id: string;
   clients: TessenConfigClient[]
 }
 
@@ -30,7 +30,7 @@ export type CacheData<T> = {
   data: T;
 }
 
-export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
+export class Tessen extends Pack<TessenConfig> {
 
   // Note: We inherit the propagating event system from Pack
   // No need to override events property as Pack already handles propagation
@@ -38,7 +38,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
   cache = {
     locales: new Collection<string, CacheData<Locale>>(),
     subPacks: new Collection<string, CacheData<Pack>>(),
-    interactions: new Collection<string, CacheData<Interaction<ID>>>(),
+    interactions: new Collection<string, CacheData<Interaction>>(),
     events: new Collection<string, CacheData<EventData>>(),
     inspectors: new Collection<string, CacheData<Inspector>>(),
   }
@@ -50,7 +50,7 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
 
   clients = new Collection<string, TessenClient>();
 
-  constructor(config: TessenConfig<ID>) {
+  constructor(config: TessenConfig) {
     super(config);
   }
 
@@ -101,9 +101,9 @@ export class Tessen<ID extends string = string> extends Pack<TessenConfig, ID> {
     this.emitEvent('tessen:localesRefreshed', { contentLocales, interactionLocales });
   }
 
-  private pushCache(pack: Pack<any, any>, path: string[] = []) {
+  private pushCache(pack: Pack<any>, path: string[] = []) {
     pack.data.locales.forEach((locale, key) => this.cache.locales.set(key, { path, data: locale }));
-    pack.data.interactions.forEach((interaction, key) => this.cache.interactions.set(key, { path, data: interaction as Interaction<ID> }));
+    pack.data.interactions.forEach((interaction, key) => this.cache.interactions.set(key, { path, data: interaction as Interaction }));
     pack.data.events.forEach((event, key) => this.cache.events.set(key, { path, data: event }));
     pack.data.inspectors.forEach((inspector, key) => this.cache.inspectors.set(key, { path, data: inspector }));
 

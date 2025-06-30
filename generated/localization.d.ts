@@ -1,9 +1,25 @@
 import { ContentValue } from "../src/lib/Locale";
 
-// Base interface that can be extended by specific Tessen instances
-export interface GeneratedLocalization {
-  [tessenId: string]: ContentValue;
+// Global declaration for Tessen localization types
+declare global {
+    namespace Tessen {
+        interface Localization extends ContentValue {
+            // This interface can be extended via module augmentation
+            // Example:
+            // declare global {
+            //     namespace Tessen {
+            //         interface Localization {
+            //             hello: () => string;
+            //             world: (param: string) => string;
+            //             nested: {
+            //                 welcome: (username: string) => string;
+            //             };
+            //         }
+            //     }
+            // }
+        }
+    }
 }
 
-// This will be overridden by actual generated files with specific Tessen instance localizations
-export interface TessenLocalizationMap extends GeneratedLocalization {}
+// Export empty object to make this a module
+export {};

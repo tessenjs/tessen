@@ -1,11 +1,11 @@
 import { Collection } from "discord.js";
-import { TessenLocalizationMap } from "../../generated/localization";
 import { Identifiable } from "$types/Identifiable";
 import { DisposeCallback } from "$types/DisposeCallback";
 import type { DISCORD_LOCALES } from "$utils/publishInteractions";
 import { readFileSync } from "fs";
 import { parse as parseYaml } from "yaml";
 import { extname } from "path";
+import "../../generated/localization";
 
 // Extract base language codes from Discord locales (e.g., "en-US" -> "en", "tr" -> "tr")
 export type Language = {
@@ -302,6 +302,4 @@ export type ContextMenuLocale = {
 
 export type InteractionLocaleData = CommandInteractionLocale | ContextMenuLocale;
 
-export type GetLocalization<TessenId extends string> = TessenId extends keyof TessenLocalizationMap 
-  ? TessenLocalizationMap[TessenId] 
-  : ContentValue;
+export type GetLocalization = Tessen.Localization;
