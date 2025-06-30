@@ -49,14 +49,16 @@ function extractContextInfo(eventName: string, args: any[]): { guild: Guild | nu
 }
 
 // Helper function to create localization objects for events
-function createEventLocalizationObjects<TessenId extends string>(
-  tessenId: TessenId,
+function createEventLocalizationObjects(
   tessen: Tessen,
   guild: Guild | null,
   interaction: Interaction | null
 ) {
-  const defaultLocalization = tessen.locales.content.get('en') || {} as ContentValue;
-  const guildLocale = guild?.preferredLocale?.split('-')[0] || 'en';
+  // Get default language from Tessen config, fallback to 'en'
+  const defaultLanguage = tessen.config.defaults?.language || 'en';
+  const defaultLocalization = tessen.locales.content.get(defaultLanguage) || {} as ContentValue;
+  
+  const guildLocale = guild?.preferredLocale?.split('-')[0] || defaultLanguage;
   const userLocale = interaction?.locale?.split('-')[0] || guildLocale;
   
   const guildLocalization = tessen.locales.content.get(guildLocale) || defaultLocalization;
@@ -70,7 +72,7 @@ function createEventLocalizationObjects<TessenId extends string>(
   };
 }
 
-export async function handleEvent<TessenId extends string = string>(
+export async function handleEvent(
   tessen: Tessen,
   client: TessenClient,
   eventName: keyof typeof TessenClientEventMap,
@@ -95,7 +97,6 @@ export async function handleEvent<TessenId extends string = string>(
 
     // Add localization objects to context
     const localizationObjects = createEventLocalizationObjects(
-      tessen.id as TessenId,
       tessen,
       guild,
       interaction

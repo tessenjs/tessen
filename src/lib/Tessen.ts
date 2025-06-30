@@ -6,7 +6,7 @@ import { TessenClientEventMap } from "$types/ClientEvents";
 import { Interaction } from "$types/Interactions";
 import { EventData } from "$types/Events";
 import { Inspector } from "$lib/Inspector";
-import { ContentValue, Locale, InteractionLocaleData } from "$lib/Locale";
+import { ContentValue, Locale, InteractionLocaleData, Language } from "$lib/Locale";
 import { publishInteractions } from "$utils/publishInteractions";
 import { ComponentBuildConfig, ValidComponentId, encodeCustomDataSync, BuiltComponent, encodeCustomData } from "$types/ComponentBuilder";
 import { ButtonStyleNames } from "$types/ComponentOptions";
@@ -20,7 +20,10 @@ export type TessenClient = { id: string, client: Client, token: string };
 
 export interface TessenConfig {
   id: string;
-  clients: TessenConfigClient[]
+  clients: TessenConfigClient[];
+  defaults?: {
+    language?: Language;
+  };
 }
 
 export type SelectComponent = ComponentType.StringSelect | ComponentType.UserSelect | ComponentType.RoleSelect | ComponentType.ChannelSelect | ComponentType.MentionableSelect;

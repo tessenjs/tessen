@@ -12,8 +12,11 @@ function createInteractionLocalizationObjects(
   guild: Guild | null,
   interaction: DiscordInteraction
 ) {
-  const defaultLocalization = tessen.locales.content.get('en') || {} as ContentValue;
-  const guildLocale = guild?.preferredLocale?.split('-')[0] || 'en';
+  // Get default language from Tessen config, fallback to 'en'
+  const defaultLanguage = tessen.config.defaults?.language || 'en';
+  const defaultLocalization = tessen.locales.content.get(defaultLanguage) || {} as ContentValue;
+  
+  const guildLocale = guild?.preferredLocale?.split('-')[0] || defaultLanguage;
   const userLocale = interaction.locale?.split('-')[0] || guildLocale;
   
   const guildLocalization = tessen.locales.content.get(guildLocale) || defaultLocalization;
@@ -80,7 +83,7 @@ export async function handleInteraction(
   }
 }
 
-async function handleAutocompleteInteraction<TessenId extends string = string>(
+async function handleAutocompleteInteraction(
   tessen: Tessen,
   client: TessenClient,
   interaction: AutocompleteInteraction
@@ -178,7 +181,7 @@ async function handleAutocompleteInteraction<TessenId extends string = string>(
   await interaction.respond([]);
 }
 
-async function handleChatInputCommand<TessenId extends string = string>(
+async function handleChatInputCommand(
   tessen: Tessen,
   client: TessenClient,
   interaction: ChatInputInteractionWrapper['interaction']
