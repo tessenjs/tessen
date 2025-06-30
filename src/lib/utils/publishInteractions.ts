@@ -6,6 +6,7 @@ import {
   ApplicationCommandDataResolvable,
   ApplicationCommandOptionData,
   PermissionResolvable,
+  PermissionFlagsBits
 } from "discord.js";
 import { REST } from "@discordjs/rest";
 import {
@@ -108,9 +109,21 @@ function convertContextTypes(
 // Convert permission flags to Discord.js format
 function convertPermissions(
   permissions?: (keyof PermissionFlags)[],
-): PermissionResolvable | null | undefined {
+): string | null | undefined {
   if (!permissions || permissions.length === 0) return null;
-  return permissions;
+  
+  // Convert permission strings to PermissionFlagsBits and combine using bitwise OR
+  let combinedPermissions = 0n;
+  
+  for (const permission of permissions) {
+    const permissionBit = PermissionFlagsBits[permission];
+    if (permissionBit !== undefined) {
+      combinedPermissions |= permissionBit;
+    }
+  }
+  
+  // Convert BigInt to string for Discord API
+  return combinedPermissions.toString();
 }
 
 // Convert camelCase to snake_case
@@ -146,7 +159,7 @@ interface TessenApplicationCommand {
   type: ApplicationCommandType.ChatInput;
   description: string;
   options?: ApplicationCommandOptionData[];
-  defaultMemberPermissions?: PermissionResolvable | null;
+  defaultMemberPermissions?: string | null;
   contexts?: InteractionContextType[];
   nsfw?: boolean;
 }
