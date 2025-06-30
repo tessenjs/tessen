@@ -1294,6 +1294,10 @@ export async function publishInteractions<ID extends string>(
         }
       }
     } catch (error) {
+      console.error(
+        `Failed to publish interactions for client '${client.namespace}':`,
+        error,
+      );
       tessen.events.emit("tessen:interactionsPublishError", {
         clientId: client.namespace,
         error: error as Error,
