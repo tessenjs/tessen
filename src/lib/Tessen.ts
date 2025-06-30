@@ -78,7 +78,9 @@ export class Tessen extends Pack<TessenConfig> {
 
     const contentLocales: string[] = [];
     const interactionLocales: string[] = [];
+    const defaultLanguage = this.config.defaults?.language || 'en';
 
+    // First pass: collect all content locales without defaultify
     for (const [key, value] of this.cache.locales) {
       const locale = value.data;
       
@@ -97,6 +99,17 @@ export class Tessen extends Pack<TessenConfig> {
         }
         this.locales.interaction.set(language, currentInteractionLocale);
         if (!interactionLocales.includes(language)) interactionLocales.push(language);
+      }
+    }
+
+    // Second pass: recursively defaultify all content locales with the default language
+    const defaultContentLocale = this.locales.content.get(defaultLanguage) || {} as ContentValue;
+    
+    for (const [language, contentValue] of this.locales.content) {
+      if (language !== defaultLanguage) {
+        // Recursively defaultify this language's content with the default language
+        const enhancedContentLocale = defaultify(contentValue, defaultContentLocale, true);
+        this.locales.content.set(language, enhancedContentLocale);
       }
     }
 
