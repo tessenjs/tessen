@@ -281,8 +281,8 @@ function getDiscordLocales(internalLocale: string): string[] {
 }
 
 // Helper function to get localized data for interactions
-function getLocalizedInteractionData<ID extends string>(
-  tessen: Tessen<ID>,
+function getLocalizedInteractionData(
+  tessen: Tessen,
   interactionId: string,
   locale: string,
 ): CommandInteractionLocale | undefined {
@@ -302,8 +302,8 @@ function getLocalizedInteractionData<ID extends string>(
 }
 
 // Helper function to get localized name for a specific command combination
-function getLocalizedCommandName<ID extends string>(
-  tessen: Tessen<ID>,
+function getLocalizedCommandName(
+  tessen: Tessen,
   interactionId: string,
   commandName: string,
   locale: string,
@@ -340,8 +340,8 @@ function getLocalizedCommandName<ID extends string>(
 }
 
 // Helper function to get localized name parts for subcommands/groups
-function getLocalizedNameParts<ID extends string>(
-  tessen: Tessen<ID>,
+function getLocalizedNameParts(
+  tessen: Tessen,
   interactionId: string,
   originalCombination: string,
   locale: string,
@@ -380,8 +380,8 @@ function getLocalizedNameParts<ID extends string>(
 }
 
 // Helper function to localize command names and descriptions
-function localizeCommand<ID extends string>(
-  tessen: Tessen<ID>,
+function localizeCommand(
+  tessen: Tessen,
   command: TessenApplicationCommand,
   interactionId: string,
   commandName: string,
@@ -427,8 +427,8 @@ function localizeCommand<ID extends string>(
 }
 
 // Helper function to build localization maps for subcommand options (non-nested)
-function buildSubcommandOptionLocalizations<ID extends string>(
-  tessen: Tessen<ID>,
+function buildSubcommandOptionLocalizations(
+  tessen: Tessen,
   options: readonly ApplicationCommandOptionData[],
   interactionId: string,
 ): ApplicationCommandOptionData[] {
@@ -545,8 +545,8 @@ function buildSubcommandOptionLocalizations<ID extends string>(
 }
 
 // Helper function to build localization maps for options
-function buildOptionLocalizations<ID extends string>(
-  tessen: Tessen<ID>,
+function buildOptionLocalizations(
+  tessen: Tessen,
   options: readonly ApplicationCommandOptionData[],
   interactionId: string,
 ): ApplicationCommandOptionData[] {
@@ -672,8 +672,8 @@ function buildOptionLocalizations<ID extends string>(
   });
 }
 
-export async function publishInteractions<ID extends string>(
-  tessen: Tessen<ID>,
+export async function publishInteractions(
+  tessen: Tessen,
   guildId?: string,
 ) {
   // Group interactions by target client namespace
@@ -1252,7 +1252,7 @@ export async function publishInteractions<ID extends string>(
   }
 
   // Collect all clients for publishing
-  const clients = Array.from(tessen.clients.values()).map((tessenClient) => ({
+  const clients = Array.from(tessen.clients.values()).map((tessenClient: TessenClient) => ({
     token: tessenClient.client.token!,
     namespace: tessenClient.id,
   }));
