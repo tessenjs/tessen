@@ -302,4 +302,4 @@ export type ContextMenuLocale = {
 
 export type InteractionLocaleData = CommandInteractionLocale | ContextMenuLocale;
 
-export type GetLocalization = Tessen.Localization;
+export type GetLocalization = Tessen.Localization;;
