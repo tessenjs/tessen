@@ -8,7 +8,7 @@ import { EventData } from "$types/Events";
 import { Inspector } from "$lib/Inspector";
 import { ContentValue, Locale, InteractionLocaleData, Language } from "$lib/Locale";
 import { publishInteractions } from "$utils/publishInteractions";
-import { ComponentBuildConfig, ValidComponentId, encodeCustomDataSync, BuiltComponent, encodeCustomData } from "$types/ComponentBuilder";
+import { ComponentBuildConfig, ValidComponentId, encodeCustomDataSync, BuiltComponent, encodeCustomData, BuiltComponentReturn } from "$types/ComponentBuilder";
 import { ButtonStyleNames } from "$types/ComponentOptions";
 import { ComponentType, ButtonStyle, ModalComponentData } from "discord.js";
 import { PackEventMap } from "$types/PackEvents";
@@ -185,7 +185,7 @@ export class Tessen extends Pack<TessenConfig> {
     }
   }
 
-  buildComponent<T extends ValidComponentId>(config: ComponentBuildConfig<T>): BuiltComponent {
+  buildComponent<T extends ValidComponentId>(config: ComponentBuildConfig<T>): BuiltComponentReturn<T> {
     // Find the component registration in cache
     const cachedComponent = this.cache.interactions.get(config.id as string);
     
@@ -215,7 +215,7 @@ export class Tessen extends Pack<TessenConfig> {
         return styleMap[styleName];
       };
 
-      const builtButton: BuiltComponent = {
+      const builtButton = {
         type: ComponentType.Button,
         style: getButtonStyle(overrides.style || buttonOptions.style),
         label: overrides.label || buttonOptions.label,
@@ -226,9 +226,9 @@ export class Tessen extends Pack<TessenConfig> {
             ? { name: overrides.emoji || buttonOptions.emoji }
             : overrides.emoji || buttonOptions.emoji
         } : {})
-      };
+      } as const;
 
-      return builtButton;
+      return builtButton as BuiltComponentReturn<T>;
     }
 
     // Build select menu components
@@ -241,30 +241,68 @@ export class Tessen extends Pack<TessenConfig> {
       const selectOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
-      // Map component types to Discord.js ComponentType enum values
-      const getSelectMenuType = (type: string): SelectComponent => {
-        const typeMap: Record<string, SelectComponent> = {
-          'StringSelectMenu': ComponentType.StringSelect,
-          'UserSelectMenu': ComponentType.UserSelect,
-          'RoleSelectMenu': ComponentType.RoleSelect,
-          'ChannelSelectMenu': ComponentType.ChannelSelect,
-          'MentionableSelectMenu': ComponentType.MentionableSelect
-        };
-
-        return typeMap[type] as any;
-      };
-
-      const builtSelectMenu: BuiltComponent = {
-        type: getSelectMenuType(componentData.type),
-        customId,
-        placeholder: overrides.placeholder || selectOptions.placeholder,
-        minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-        maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-        disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-        ...(componentData.type === 'StringSelectMenu' && selectOptions.options ? { options: selectOptions.options } : {})
-      };
-
-      return builtSelectMenu;
+      // Build specific select menu types based on component type
+      if (componentData.type === 'StringSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.StringSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
+          options: overrides.options || selectOptions.options || []
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'UserSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.UserSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'RoleSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.RoleSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'ChannelSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.ChannelSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
+          ...(overrides.channelTypes || selectOptions.channelTypes ? { channelTypes: overrides.channelTypes || selectOptions.channelTypes } : {})
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'MentionableSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.MentionableSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
     }
 
     // Build modal component
@@ -272,20 +310,20 @@ export class Tessen extends Pack<TessenConfig> {
       const modalOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
-      const builtModal: ModalComponentData = {
+      const builtModal = {
         customId,
         title: overrides.title || modalOptions.title || 'Modal',
         components: overrides.components || modalOptions.components || []
-      };
+      } as const;
 
-      return builtModal;
+      return builtModal as BuiltComponentReturn<T>;
     }
 
     throw new Error(`Unsupported component type for id "${String(config.id)}"`);
   }
 
   // Async version of buildComponent for when sequential processing is needed
-  async buildComponentAsync<T extends ValidComponentId>(config: ComponentBuildConfig<T>): Promise<BuiltComponent> {
+  async buildComponentAsync<T extends ValidComponentId>(config: ComponentBuildConfig<T>): Promise<BuiltComponentReturn<T>> {
     // Find the component registration in cache
     const cachedComponent = this.cache.interactions.get(config.id as string);
     
@@ -315,7 +353,7 @@ export class Tessen extends Pack<TessenConfig> {
         return styleMap[styleName];
       };
 
-      const builtButton: BuiltComponent = {
+      const builtButton = {
         type: ComponentType.Button,
         style: getButtonStyle(overrides.style || buttonOptions.style),
         label: overrides.label || buttonOptions.label,
@@ -326,9 +364,9 @@ export class Tessen extends Pack<TessenConfig> {
             ? { name: overrides.emoji || buttonOptions.emoji }
             : overrides.emoji || buttonOptions.emoji
         } : {})
-      };
+      } as const;
 
-      return builtButton;
+      return builtButton as BuiltComponentReturn<T>;
     }
 
     // Build select menu components
@@ -341,30 +379,68 @@ export class Tessen extends Pack<TessenConfig> {
       const selectOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
-      // Map component types to Discord.js ComponentType enum values
-      const getSelectMenuType = (type: string): SelectComponent => {
-        const typeMap: Record<string, SelectComponent> = {
-          'StringSelectMenu': ComponentType.StringSelect,
-          'UserSelectMenu': ComponentType.UserSelect,
-          'RoleSelectMenu': ComponentType.RoleSelect,
-          'ChannelSelectMenu': ComponentType.ChannelSelect,
-          'MentionableSelectMenu': ComponentType.MentionableSelect
-        };
-
-        return typeMap[type] as any;
-      };
-
-      const builtSelectMenu: BuiltComponent = {
-        type: getSelectMenuType(componentData.type),
-        customId,
-        placeholder: overrides.placeholder || selectOptions.placeholder,
-        minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-        maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-        disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-        ...(componentData.type === 'StringSelectMenu' && selectOptions.options ? { options: selectOptions.options } : {})
-      };
-
-      return builtSelectMenu;
+      // Build specific select menu types based on component type
+      if (componentData.type === 'StringSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.StringSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
+          options: overrides.options || selectOptions.options || []
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'UserSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.UserSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'RoleSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.RoleSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'ChannelSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.ChannelSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
+          ...(overrides.channelTypes || selectOptions.channelTypes ? { channelTypes: overrides.channelTypes || selectOptions.channelTypes } : {})
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
+      
+      if (componentData.type === 'MentionableSelectMenu') {
+        const builtSelectMenu = {
+          type: ComponentType.MentionableSelect,
+          customId,
+          placeholder: overrides.placeholder || selectOptions.placeholder,
+          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
+          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
+          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+        } as const;
+        return builtSelectMenu as BuiltComponentReturn<T>;
+      }
     }
 
     // Build modal component
@@ -372,13 +448,13 @@ export class Tessen extends Pack<TessenConfig> {
       const modalOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
-      const builtModal: ModalComponentData = {
+      const builtModal = {
         customId,
         title: overrides.title || modalOptions.title || 'Modal',
         components: overrides.components || modalOptions.components || []
-      };
+      } as const;
 
-      return builtModal;
+      return builtModal as BuiltComponentReturn<T>;
     }
 
     throw new Error(`Unsupported component type for id "${String(config.id)}"`);

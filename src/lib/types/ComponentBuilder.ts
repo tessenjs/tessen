@@ -8,7 +8,7 @@ import {
   MentionableSelectMenuComponentOptions,
   ModalComponentOptions 
 } from "./ComponentOptions";
-import { ComponentType, ButtonStyle, ModalComponentData } from "discord.js";
+import { ComponentType, ButtonStyle, ModalComponentData, ButtonComponentData, StringSelectMenuComponentData, UserSelectMenuComponentData, RoleSelectMenuComponentData, ChannelSelectMenuComponentData, MentionableSelectMenuComponentData } from "discord.js";
 import { PackEventMap } from "./PackEvents";
 import { ResultEventEmitter } from "./ResultEventEmitter";
 
@@ -34,6 +34,11 @@ declare global {
 // Type helper to extract all custom data types
 export type CustomDataValue = Tessen.CustomDataTypes[keyof Tessen.CustomDataTypes];
 
+// Recursive partial type for deep partial objects
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 // Event data interfaces for custom data processing
 export interface CustomDataEncodeEventData {
   notParsed: CustomDataValue[];
@@ -45,48 +50,62 @@ export interface CustomDataDecodeEventData {
   parsed: CustomDataValue[];
 }
 
-// Built component types
-export interface BuiltButtonComponent {
-  type: ComponentType.Button;
-  customId?: string;
-  style: ButtonStyle;
-  label?: string;
-  emoji?: { name: string } | { id: string };
-  url?: string;
-  disabled?: boolean;
-}
+// Built component types - using Discord.js native types
+export type BuiltButtonComponent = ButtonComponentData;
+export type BuiltStringSelectMenuComponent = StringSelectMenuComponentData;
+export type BuiltUserSelectMenuComponent = UserSelectMenuComponentData;
+export type BuiltRoleSelectMenuComponent = RoleSelectMenuComponentData;
+export type BuiltChannelSelectMenuComponent = ChannelSelectMenuComponentData;
+export type BuiltMentionableSelectMenuComponent = MentionableSelectMenuComponentData;
+export type BuiltModalComponent = ModalComponentData;
 
-export interface BuiltSelectMenuComponent {
-  type: ComponentType.StringSelect | ComponentType.UserSelect | ComponentType.RoleSelect | ComponentType.ChannelSelect | ComponentType.MentionableSelect;
-  customId: string;
-  placeholder?: string;
-  minValues?: number;
-  maxValues?: number;
-  disabled?: boolean;
-  options?: any[]; // For StringSelect
-}
+// Union type for all select menu components
+export type BuiltSelectMenuComponent = 
+  | BuiltStringSelectMenuComponent 
+  | BuiltUserSelectMenuComponent 
+  | BuiltRoleSelectMenuComponent 
+  | BuiltChannelSelectMenuComponent 
+  | BuiltMentionableSelectMenuComponent;
 
-export type BuiltComponent = BuiltButtonComponent | BuiltSelectMenuComponent | ModalComponentData;
+export type BuiltComponent = BuiltButtonComponent | BuiltSelectMenuComponent | BuiltModalComponent;
+
+// Conditional return type based on component type
+export type BuiltComponentReturn<T extends keyof Tessen.ComponentMap> = 
+  Tessen.ComponentMap[T] extends 'Button' 
+    ? BuiltButtonComponent
+    : Tessen.ComponentMap[T] extends 'StringSelectMenu'
+    ? BuiltStringSelectMenuComponent
+    : Tessen.ComponentMap[T] extends 'UserSelectMenu'
+    ? BuiltUserSelectMenuComponent
+    : Tessen.ComponentMap[T] extends 'RoleSelectMenu'
+    ? BuiltRoleSelectMenuComponent
+    : Tessen.ComponentMap[T] extends 'ChannelSelectMenu'
+    ? BuiltChannelSelectMenuComponent
+    : Tessen.ComponentMap[T] extends 'MentionableSelectMenu'
+    ? BuiltMentionableSelectMenuComponent
+    : Tessen.ComponentMap[T] extends 'Modal'
+    ? BuiltModalComponent
+    : BuiltComponent; // Fallback for unknown types
 
 // Component build configuration with flexible data typing
 export interface ComponentBuildConfig<T extends keyof Tessen.ComponentMap = keyof Tessen.ComponentMap> {
   id: T;
   data?: CustomDataValue[];
   overrides?: Tessen.ComponentMap[T] extends 'Button' 
-    ? ButtonComponentOptions 
+    ? DeepPartial<ButtonComponentOptions>
     : Tessen.ComponentMap[T] extends 'StringSelectMenu'
-    ? StringSelectMenuComponentOptions
+    ? DeepPartial<StringSelectMenuComponentOptions>
     : Tessen.ComponentMap[T] extends 'UserSelectMenu'
-    ? UserSelectMenuComponentOptions
+    ? DeepPartial<UserSelectMenuComponentOptions>
     : Tessen.ComponentMap[T] extends 'RoleSelectMenu'
-    ? RoleSelectMenuComponentOptions
+    ? DeepPartial<RoleSelectMenuComponentOptions>
     : Tessen.ComponentMap[T] extends 'ChannelSelectMenu'
-    ? ChannelSelectMenuComponentOptions
+    ? DeepPartial<ChannelSelectMenuComponentOptions>
     : Tessen.ComponentMap[T] extends 'MentionableSelectMenu'
-    ? MentionableSelectMenuComponentOptions
+    ? DeepPartial<MentionableSelectMenuComponentOptions>
     : Tessen.ComponentMap[T] extends 'Modal'
-    ? ModalComponentOptions
-    : ButtonComponentOptions | SelectMenuComponentOptions | ModalComponentOptions; // Fallback for unknown types
+    ? DeepPartial<ModalComponentOptions>
+    : DeepPartial<ButtonComponentOptions | SelectMenuComponentOptions | ModalComponentOptions>; // Fallback for unknown types
 }
 
 // Helper type to ensure component ID exists in the map
