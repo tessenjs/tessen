@@ -26,7 +26,7 @@ declare global {
 
     interface ComponentMap {
       // Direct mapping of component IDs to their types
-      [componentId: string]: 'Button' | 'StringSelectMenu' | 'UserSelectMenu' | 'RoleSelectMenu' | 'ChannelSelectMenu' | 'MentionableSelectMenu' | 'Modal';
+      // [componentId: string]: 'Button' | 'StringSelectMenu' | 'UserSelectMenu' | 'RoleSelectMenu' | 'ChannelSelectMenu' | 'MentionableSelectMenu' | 'Modal';
     }
   }
 }
