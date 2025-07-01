@@ -203,6 +203,9 @@ export class Tessen extends Pack<TessenConfig> {
       const buttonOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, buttonOptions, true);
+
       // Convert style names to Discord.js ButtonStyle enum values
       const getButtonStyle = (styleName: ButtonStyleNames = 'Primary'): ButtonStyle => {
         const styleMap: Record<ButtonStyleNames, ButtonStyle> = {
@@ -217,14 +220,14 @@ export class Tessen extends Pack<TessenConfig> {
 
       const builtButton = {
         type: ComponentType.Button,
-        style: getButtonStyle(overrides.style || buttonOptions.style),
-        label: overrides.label || buttonOptions.label,
-        disabled: overrides.disabled ?? buttonOptions.disabled ?? false,
-        ...(overrides.url || buttonOptions.url ? { url: overrides.url || buttonOptions.url } : { customId }),
-        ...(overrides.emoji || buttonOptions.emoji ? { 
-          emoji: typeof (overrides.emoji || buttonOptions.emoji) === 'string' 
-            ? { name: overrides.emoji || buttonOptions.emoji }
-            : overrides.emoji || buttonOptions.emoji
+        style: getButtonStyle(finalOptions.style),
+        label: finalOptions.label,
+        disabled: finalOptions.disabled ?? false,
+        ...(finalOptions.url ? { url: finalOptions.url } : { customId }),
+        ...(finalOptions.emoji ? { 
+          emoji: typeof finalOptions.emoji === 'string' 
+            ? { name: finalOptions.emoji }
+            : finalOptions.emoji
         } : {})
       } as const;
 
@@ -241,16 +244,19 @@ export class Tessen extends Pack<TessenConfig> {
       const selectOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, selectOptions, true);
+
       // Build specific select menu types based on component type
       if (componentData.type === 'StringSelectMenu') {
         const builtSelectMenu = {
           type: ComponentType.StringSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-          options: overrides.options || selectOptions.options || []
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false,
+          options: finalOptions.options || []
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -259,10 +265,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.UserSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -271,10 +277,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.RoleSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -283,11 +289,11 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.ChannelSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-          ...(overrides.channelTypes || selectOptions.channelTypes ? { channelTypes: overrides.channelTypes || selectOptions.channelTypes } : {})
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -296,10 +302,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.MentionableSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -310,10 +316,13 @@ export class Tessen extends Pack<TessenConfig> {
       const modalOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, modalOptions, true);
+
       const builtModal = {
         customId,
-        title: overrides.title || modalOptions.title || 'Modal',
-        components: overrides.components || modalOptions.components || []
+        title: finalOptions.title || 'Modal',
+        components: finalOptions.components || []
       } as const;
 
       return builtModal as BuiltComponentReturn<T>;
@@ -341,6 +350,9 @@ export class Tessen extends Pack<TessenConfig> {
       const buttonOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, buttonOptions, true);
+
       // Convert style names to Discord.js ButtonStyle enum values
       const getButtonStyle = (styleName: ButtonStyleNames = 'Primary'): ButtonStyle => {
         const styleMap: Record<ButtonStyleNames, ButtonStyle> = {
@@ -355,14 +367,14 @@ export class Tessen extends Pack<TessenConfig> {
 
       const builtButton = {
         type: ComponentType.Button,
-        style: getButtonStyle(overrides.style || buttonOptions.style),
-        label: overrides.label || buttonOptions.label,
-        disabled: overrides.disabled ?? buttonOptions.disabled ?? false,
-        ...(overrides.url || buttonOptions.url ? { url: overrides.url || buttonOptions.url } : { customId }),
-        ...(overrides.emoji || buttonOptions.emoji ? { 
-          emoji: typeof (overrides.emoji || buttonOptions.emoji) === 'string' 
-            ? { name: overrides.emoji || buttonOptions.emoji }
-            : overrides.emoji || buttonOptions.emoji
+        style: getButtonStyle(finalOptions.style),
+        label: finalOptions.label,
+        disabled: finalOptions.disabled ?? false,
+        ...(finalOptions.url ? { url: finalOptions.url } : { customId }),
+        ...(finalOptions.emoji ? { 
+          emoji: typeof finalOptions.emoji === 'string' 
+            ? { name: finalOptions.emoji }
+            : finalOptions.emoji
         } : {})
       } as const;
 
@@ -379,16 +391,19 @@ export class Tessen extends Pack<TessenConfig> {
       const selectOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, selectOptions, true);
+
       // Build specific select menu types based on component type
       if (componentData.type === 'StringSelectMenu') {
         const builtSelectMenu = {
           type: ComponentType.StringSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-          options: overrides.options || selectOptions.options || []
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false,
+          options: finalOptions.options || []
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -397,10 +412,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.UserSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -409,10 +424,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.RoleSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -421,11 +436,11 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.ChannelSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false,
-          ...(overrides.channelTypes || selectOptions.channelTypes ? { channelTypes: overrides.channelTypes || selectOptions.channelTypes } : {})
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -434,10 +449,10 @@ export class Tessen extends Pack<TessenConfig> {
         const builtSelectMenu = {
           type: ComponentType.MentionableSelect,
           customId,
-          placeholder: overrides.placeholder || selectOptions.placeholder,
-          minValues: overrides.minValues ?? selectOptions.minValues ?? 1,
-          maxValues: overrides.maxValues ?? selectOptions.maxValues ?? 1,
-          disabled: overrides.disabled ?? selectOptions.disabled ?? false
+          placeholder: finalOptions.placeholder,
+          minValues: finalOptions.minValues ?? 1,
+          maxValues: finalOptions.maxValues ?? 1,
+          disabled: finalOptions.disabled ?? false
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -448,10 +463,13 @@ export class Tessen extends Pack<TessenConfig> {
       const modalOptions = (componentData as any).options || {};
       const overrides = (config.overrides as any) || {};
 
+      // Merge options with overrides using defaultify
+      const finalOptions = defaultify(overrides, modalOptions, true);
+
       const builtModal = {
         customId,
-        title: overrides.title || modalOptions.title || 'Modal',
-        components: overrides.components || modalOptions.components || []
+        title: finalOptions.title || 'Modal',
+        components: finalOptions.components || []
       } as const;
 
       return builtModal as BuiltComponentReturn<T>;
