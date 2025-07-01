@@ -1,5 +1,13 @@
-import { TessenComponentMap } from "../../../generated/components";
-import { ButtonComponentOptions, SelectMenuComponentOptions } from "./ComponentOptions";
+import { 
+  ButtonComponentOptions, 
+  SelectMenuComponentOptions,
+  StringSelectMenuComponentOptions,
+  UserSelectMenuComponentOptions,
+  RoleSelectMenuComponentOptions,
+  ChannelSelectMenuComponentOptions,
+  MentionableSelectMenuComponentOptions,
+  ModalComponentOptions 
+} from "./ComponentOptions";
 import { ComponentType, ButtonStyle, ModalComponentData } from "discord.js";
 import { PackEventMap } from "./PackEvents";
 import { ResultEventEmitter } from "./ResultEventEmitter";
@@ -14,6 +22,11 @@ declare global {
       // Default types - these are always available
       string: string;
       number: number;
+    }
+
+    interface ComponentMap {
+      // Direct mapping of component IDs to their types
+      [componentId: string]: 'Button' | 'StringSelectMenu' | 'UserSelectMenu' | 'RoleSelectMenu' | 'ChannelSelectMenu' | 'MentionableSelectMenu' | 'Modal';
     }
   }
 }
@@ -56,18 +69,28 @@ export interface BuiltSelectMenuComponent {
 export type BuiltComponent = BuiltButtonComponent | BuiltSelectMenuComponent | ModalComponentData;
 
 // Component build configuration with flexible data typing
-export interface ComponentBuildConfig<T extends keyof TessenComponentMap = keyof TessenComponentMap> {
+export interface ComponentBuildConfig<T extends keyof Tessen.ComponentMap = keyof Tessen.ComponentMap> {
   id: T;
   data?: CustomDataValue[];
-  overrides?: TessenComponentMap[T]['type'] extends 'Button' 
+  overrides?: Tessen.ComponentMap[T] extends 'Button' 
     ? ButtonComponentOptions 
-    : TessenComponentMap[T]['type'] extends 'StringSelectMenu' | 'UserSelectMenu' | 'RoleSelectMenu' | 'ChannelSelectMenu' | 'MentionableSelectMenu'
-    ? SelectMenuComponentOptions
-    : never;
+    : Tessen.ComponentMap[T] extends 'StringSelectMenu'
+    ? StringSelectMenuComponentOptions
+    : Tessen.ComponentMap[T] extends 'UserSelectMenu'
+    ? UserSelectMenuComponentOptions
+    : Tessen.ComponentMap[T] extends 'RoleSelectMenu'
+    ? RoleSelectMenuComponentOptions
+    : Tessen.ComponentMap[T] extends 'ChannelSelectMenu'
+    ? ChannelSelectMenuComponentOptions
+    : Tessen.ComponentMap[T] extends 'MentionableSelectMenu'
+    ? MentionableSelectMenuComponentOptions
+    : Tessen.ComponentMap[T] extends 'Modal'
+    ? ModalComponentOptions
+    : ButtonComponentOptions | SelectMenuComponentOptions | ModalComponentOptions; // Fallback for unknown types
 }
 
 // Helper type to ensure component ID exists in the map
-export type ValidComponentId = keyof TessenComponentMap;
+export type ValidComponentId = keyof Tessen.ComponentMap;
 
 // Updated utility functions with sequential event processing
 export async function encodeCustomData(

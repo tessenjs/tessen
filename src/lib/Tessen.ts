@@ -10,7 +10,6 @@ import { ContentValue, Locale, InteractionLocaleData, Language } from "$lib/Loca
 import { publishInteractions } from "$utils/publishInteractions";
 import { ComponentBuildConfig, ValidComponentId, encodeCustomDataSync, BuiltComponent, encodeCustomData } from "$types/ComponentBuilder";
 import { ButtonStyleNames } from "$types/ComponentOptions";
-import { TessenComponentMap } from "../../generated/components";
 import { ComponentType, ButtonStyle, ModalComponentData } from "discord.js";
 import { PackEventMap } from "$types/PackEvents";
 import { ResultEventEmitter } from "$types/ResultEventEmitter";
