@@ -18,6 +18,7 @@ export interface BaseSelectMenuComponentOptions {
   disabled?: boolean;
   minValues?: number;
   maxValues?: number;
+  defaultValues?: string[];
 }
 
 // String select menu options - requires options array

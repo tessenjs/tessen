@@ -256,7 +256,8 @@ export class Tessen extends Pack<TessenConfig> {
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
           disabled: finalOptions.disabled ?? false,
-          options: finalOptions.options || []
+          options: finalOptions.options || [],
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -268,7 +269,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -280,7 +282,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -293,7 +296,8 @@ export class Tessen extends Pack<TessenConfig> {
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
           disabled: finalOptions.disabled ?? false,
-          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {})
+          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {}),
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -305,7 +309,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -403,7 +408,8 @@ export class Tessen extends Pack<TessenConfig> {
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
           disabled: finalOptions.disabled ?? false,
-          options: finalOptions.options || []
+          options: finalOptions.options || [],
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -415,7 +421,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -427,7 +434,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -440,7 +448,8 @@ export class Tessen extends Pack<TessenConfig> {
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
           disabled: finalOptions.disabled ?? false,
-          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {})
+          ...(finalOptions.channelTypes ? { channelTypes: finalOptions.channelTypes } : {}),
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
@@ -452,7 +461,8 @@ export class Tessen extends Pack<TessenConfig> {
           placeholder: finalOptions.placeholder,
           minValues: finalOptions.minValues ?? 1,
           maxValues: finalOptions.maxValues ?? 1,
-          disabled: finalOptions.disabled ?? false
+          disabled: finalOptions.disabled ?? false,
+          ...(finalOptions.defaultValues ? { defaultValues: finalOptions.defaultValues } : {})
         } as const;
         return builtSelectMenu as BuiltComponentReturn<T>;
       }
