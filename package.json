@@ -1,6 +1,6 @@
 {
   "name": "tessen",
-  "version": "0.0.2-dev.17",
+  "version": "0.0.2-dev.18",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
