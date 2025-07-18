@@ -102,8 +102,8 @@ function convertContextTypes(
 ): InteractionContextType[] | undefined {
   if (!contexts) return undefined;
   return contexts
-    .map((context) => InteractionContextType[context])
-    .filter(Boolean);
+    .map((context) => (typeof context === "string" ? InteractionContextType[context] : context))
+    .filter((context) => typeof context === "number" && context >= 0) as InteractionContextType[];
 }
 
 // Convert permission flags to Discord.js format
