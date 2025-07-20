@@ -224,11 +224,7 @@ export class Tessen extends Pack<TessenConfig> {
         label: finalOptions.label,
         disabled: finalOptions.disabled ?? false,
         ...(finalOptions.url ? { url: finalOptions.url } : { customId }),
-        ...(finalOptions.emoji ? { 
-          emoji: typeof finalOptions.emoji === 'string' 
-            ? { name: finalOptions.emoji }
-            : finalOptions.emoji
-        } : {})
+        ...(finalOptions.emoji ? { emoji: finalOptions.emoji } : {})
       } as const;
 
       return builtButton as BuiltComponentReturn<T>;
@@ -376,11 +372,7 @@ export class Tessen extends Pack<TessenConfig> {
         label: finalOptions.label,
         disabled: finalOptions.disabled ?? false,
         ...(finalOptions.url ? { url: finalOptions.url } : { customId }),
-        ...(finalOptions.emoji ? { 
-          emoji: typeof finalOptions.emoji === 'string' 
-            ? { name: finalOptions.emoji }
-            : finalOptions.emoji
-        } : {})
+        ...(finalOptions.emoji ? { emoji: finalOptions.emoji } : {})
       } as const;
 
       return builtButton as BuiltComponentReturn<T>;
